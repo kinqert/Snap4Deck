@@ -1,0 +1,28 @@
+{
+	"name": "snap4deck",
+	"version": "1.0.0",
+	"description": "Library extension of deck.gl library for the Snap4City framework",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "Lorenzo Adreani",
+	"license": "GPL",
+	"devDependencies": {
+		"webpack": "^5.74.0",
+		"webpack-cli": "^4.10.0"
+	},
+	"dependencies": {
+		"@deck.gl/core": "^8.8.17",
+		"@deck.gl/extensions": "^8.8.17",
+		"@deck.gl/geo-layers": "^8.8.17",
+		"@deck.gl/layers": "^8.8.17",
+		"@deck.gl/mesh-layers": "^8.8.17",
+		"@loaders.gl/obj": "^3.2.11",
+		"@luma.gl/core": "^8.5.16",
+		"@math.gl/core": "^3.6.3",
+		"@math.gl/culling": "^3.6.3"
+	},
+	"exports": {
+		"./layers": "./layers/bundle.js"
+	}
+}
