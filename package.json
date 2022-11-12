@@ -19,6 +19,7 @@
 		"@deck.gl/mesh-layers": "^8.8.17",
 		"@loaders.gl/obj": "^3.2.11",
 		"@luma.gl/core": "^8.5.16",
+		"@luma.gl/experimental": "^8.5.17",
 		"@math.gl/core": "^3.6.3",
 		"@math.gl/culling": "^3.6.3"
 	},

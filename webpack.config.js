@@ -4,7 +4,7 @@ module.exports = {
   entry: './src/main.js',
   mode: 'production',
   optimization: {
-        minimize: true
+        minimize: false
     },
   output: {
     filename: 'snap4deck.min.js',
