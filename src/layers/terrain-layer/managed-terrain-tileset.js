@@ -3,9 +3,9 @@ import { _GlobeViewport, _flatten as flatten } from "@deck.gl/core";
 
 import { getTileIndices } from "../managed-tile-layer/managed-tileset";
 
-const DEFAULT_CACHE_SCALE = 1000;
+const DEFAULT_CACHE_SCALE = 10;
 
-export class GLBTileSet extends _Tileset2D {
+export class ManagedTerrainTileSet extends _Tileset2D {
 	rifViewport;
 
 	getTileIndices({ viewport, maxZoom, minZoom, zRange, modelMatrix, modelMatrixInverse }) {
@@ -17,11 +17,11 @@ export class GLBTileSet extends _Tileset2D {
 			minZoom,
 			zRange,
 			tileSize,
-			maxTiles: 500,
 			extent,
 			modelMatrix,
 			modelMatrixInverse,
-			zoomOffset: 18 - parseInt(viewport.zoom),
+			// zoomOffset
+			zoomOffset: 14 - parseInt(viewport.zoom),
 		});
 		return indices;
 	}
@@ -53,19 +53,20 @@ export class GLBTileSet extends _Tileset2D {
 		}
 		if (this._dirty) {
             this._tiles = Array.from(this._cache.values()).sort((t1, t2) => t1.zoom - t2.zoom);
+            // this._tiles = Array.from(this._cache.values());
 			this._dirty = false;
 		}
 	}
 }
 
-export class GLBTileLayer extends TileLayer {
+export class ManagedTerrainTileLayer extends TileLayer {
 	updateState({ changeFlags }) {
 		let { tileset } = this.state;
 		const propsChanged = changeFlags.propsOrDataChanged || changeFlags.updateTriggersChanged;
 		const dataChanged = changeFlags.dataChanged || (changeFlags.updateTriggersChanged && (changeFlags.updateTriggersChanged.all || changeFlags.updateTriggersChanged.getTileData));
 
 		if (!tileset) {
-			tileset = new GLBTileSet(this._getTilesetOptions());
+			tileset = new ManagedTerrainTileSet(this._getTilesetOptions());
 			this.setState({ tileset });
 		} else if (propsChanged) {
 			tileset.setOptions(this._getTilesetOptions());
@@ -113,3 +114,4 @@ export class GLBTileLayer extends TileLayer {
 			});
 	}
 }
+

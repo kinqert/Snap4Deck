@@ -17,8 +17,10 @@
 		"@deck.gl/geo-layers": "^8.8.17",
 		"@deck.gl/layers": "^8.8.17",
 		"@deck.gl/mesh-layers": "^8.8.17",
-		"@loaders.gl/obj": "^3.2.11",
+		"@loaders.gl/obj": "^3.2.13",
+		"@loaders.gl/terrain": "^3.2.13",
 		"@luma.gl/core": "^8.5.16",
+		"@luma.gl/engine": "^8.5.18",
 		"@luma.gl/experimental": "^8.5.17",
 		"@math.gl/core": "^3.6.3",
 		"@math.gl/culling": "^3.6.3"
