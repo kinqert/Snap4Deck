@@ -414,7 +414,7 @@
   resolved "https://registry.npmjs.org/@math.gl/types/-/types-3.6.3.tgz"
   integrity sha512-3uWLVXHY3jQxsXCr/UCNPSc2BG0hNUljhmOBt9l+lNFDp7zHgm0cK2Tw4kj2XfkJy4TgwZTBGwRDQgWEbLbdTA==
 
-"@math.gl/web-mercator@^3.5.1", "@math.gl/web-mercator@^3.6.2":
+"@math.gl/web-mercator@^3.5.1", "@math.gl/web-mercator@^3.6.2", "@math.gl/web-mercator@^3.6.3":
   version "3.6.3"
   resolved "https://registry.npmjs.org/@math.gl/web-mercator/-/web-mercator-3.6.3.tgz"
   integrity sha512-UVrkSOs02YLehKaehrxhAejYMurehIHPfFQvPFZmdJHglHOU4V2cCUApTVEwOksvCp161ypEqVp+9H6mGhTTcw==

@@ -11,5 +11,6 @@ Object.assign(deck, deck_geolayers);
 Object.assign(deck, deck_layers);
 Object.assign(deck, deck_meshlayers);
 
+export * from './core/bundle';
 export * from './layers/bundle';
 export * from './factories/bundle';

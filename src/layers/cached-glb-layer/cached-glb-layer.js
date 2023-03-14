@@ -26,6 +26,7 @@ async function waitWhileCondition(condition) {
 
 export class CachedGLBLayer extends ScenegraphLayer {
 	_updateScenegraph() {
+		console.log('updating scene graph');
 		const props = this.props;
 		const { gl } = this.context;
 		let scenegraphData = null;
