@@ -5,7 +5,7 @@ import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
 import { OBJLoader } from "@loaders.gl/obj";
 import { TerrainWorkerLoader } from "@loaders.gl/terrain";
 
-import { getURLFromTemplate } from "../../utils/url-template";
+import { getURLFromTemplate, urlTemplateToUpdateTrigger } from "../../utils/url-template";
 import { ManagedTerrainTileLayer } from "./managed-terrain-tileset";
 import { TerrainMeshLayer } from "../terrain-mesh-layer/terrain-mesh-layer";
 
@@ -39,13 +39,6 @@ const defaultProps = {
 };
 
 const DUMMY_DATA = [1];
-
-function urlTemplateToUpdateTrigger(template) {
-    if (Array.isArray(template)) {
-        return template.join(';');
-    }
-    return template || '';
-}
 
 export class ProxyTerrain {
 
@@ -261,6 +254,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
 
         if (this.state.isTiled) {
             // return new ManagedTerrainTileLayer(
+                console.log(this.state.zRange);
             return new TileLayer(
                 this.getSubLayerProps({
                     id: 'tiles'

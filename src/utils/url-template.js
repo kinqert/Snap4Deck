@@ -30,3 +30,10 @@ export function getURLFromTemplate(template, properties) {
 			`${bbox.west};${bbox.south};${bbox.east};${bbox.north}`
 		);
 }
+
+export function urlTemplateToUpdateTrigger(template) {
+    if (Array.isArray(template)) {
+        return template.join(';');
+    }
+    return template || '';
+}

@@ -86,7 +86,7 @@ export class GLBTileLayer extends TileLayer {
 	}
 
 	renderLayers() {
-		return this.state.tileset.tiles
+		const tiles = this.state.tileset.tiles
 			.map((tile) => {
 				const subLayerProps = this.getSubLayerPropsByTile(tile);
 				// cache the rendered layer in the tile
@@ -111,5 +111,6 @@ export class GLBTileLayer extends TileLayer {
 				}
 				return tile.layers;
 			});
+		return tiles;
 	}
 }
