@@ -17,13 +17,17 @@ export class Point {
         }
     }
 
-    toArray() {
+    toArray2() {
+        return [this.x, this.y, this.z];
+    }
+
+    toArray3() {
         return [this.x, this.y, this.z];
     }
 
     toLatLng() {
         const viewport = new WebMercatorViewport();
-        return viewport.unproject([this.x, this.y]);
+        return viewport.unprojectPosition([this.x, this.y]);
     }
 
     inverse2() {
@@ -69,7 +73,7 @@ export class Point {
     static createPointFromWorldCoords(coords) {
         const viewport = new WebMercatorViewport();
         return new Point({
-            xyz: viewport.project(coords),
+            xyz: viewport.projectPosition(coords),
         });
     }
 

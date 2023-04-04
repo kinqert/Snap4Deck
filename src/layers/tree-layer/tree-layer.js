@@ -14,7 +14,6 @@ const defaultProps = {
 }
 
 async function loadJSONTile(tile, geojson) {
-    console.log('loading json');
     const json = [];
     const features = geojson.features;
     for (let feature of features) {
@@ -24,7 +23,7 @@ async function loadJSONTile(tile, geojson) {
         const x = lon2tile(coord[0], tile.index.z);
         const y = lat2tile(coord[1], tile.index.z);
         if (tile.index.x == x && tile.index.y == y)
-            json.push({ prop: feature.properties, geometry: feature.geometry });
+            json.push({ properties: feature.properties, geometry: feature.geometry });
     }
     return json;
 }
@@ -43,7 +42,6 @@ export class TreeLayer extends CompositeLayer {
             //     json
             // });
 
-            console.log('loading json');
             const jsonTiles = {};
             const features = props.data.features;
             for (let feature of features) {
@@ -58,7 +56,7 @@ export class TreeLayer extends CompositeLayer {
                 if (!jsonTiles[x].hasOwnProperty(y)) {
                     jsonTiles[x][y] = [];
                 }
-                jsonTiles[x][y].push({ prop: feature.properties, geometry: feature.geometry });
+                jsonTiles[x][y].push({ properties: feature.properties, geometry: feature.geometry });
             }
             this.setState({ jsonTiles });
         }
@@ -121,34 +119,37 @@ export class TreeLayer extends CompositeLayer {
             data: json,
             id: `tree-layer-${z}-${x}-${y}`,
             scenegraph: gltf,
-            getPosition: d => d.geometry.coordinates,
+            getPosition: d => {
+                const elevation = d.properties && d.properties.elevation ? d.properties.elevation : 0;
+                return [...d.geometry.coordinates, this.props.getElevation(d) || 0];
+            },
             _lighting: 'pbr'
         });
     }
-    onViewportLoad(tiles) {
-        if (!tiles) {
-            return;
-        }
+    // onViewportLoad(tiles) {
+    //     if (!tiles) {
+    //         return;
+    //     }
 
-        const { zRange } = this.state;
-        const ranges = tiles
-            .map(tile => tile.content)
-            .filter(Boolean)
-            .map(arr => {
-                // @ts-ignore
-                const bounds = arr[0].header.boundingBox;
-                return bounds.map(bound => bound[2]);
-            });
-        if (ranges.length === 0) {
-            return;
-        }
-        const minZ = Math.min(...ranges.map(x => x[0]));
-        const maxZ = Math.max(...ranges.map(x => x[1]));
+    //     const { zRange } = this.state;
+    //     const ranges = tiles
+    //         .map(tile => tile.content)
+    //         .filter(Boolean)
+    //         .map(arr => {
+    //             // @ts-ignore
+    //             const bounds = arr[0].header.boundingBox;
+    //             return bounds.map(bound => bound[2]);
+    //         });
+    //     if (ranges.length === 0) {
+    //         return;
+    //     }
+    //     const minZ = Math.min(...ranges.map(x => x[0]));
+    //     const maxZ = Math.max(...ranges.map(x => x[1]));
 
-        if (!zRange || minZ < zRange[0] || maxZ > zRange[1]) {
-            this.setState({ zRange: [minZ, maxZ] });
-        }
-    }
+    //     if (!zRange || minZ < zRange[0] || maxZ > zRange[1]) {
+    //         this.setState({ zRange: [minZ, maxZ] });
+    //     }
+    // }
 
     renderLayers() {
         const {
@@ -210,6 +211,7 @@ export class TreeLayer extends CompositeLayer {
                 tileSize,
                 maxZoom,
                 minZoom,
+                minTileZoom: 14,
                 extent,
                 maxRequests,
                 onTileLoad,

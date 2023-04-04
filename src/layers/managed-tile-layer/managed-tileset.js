@@ -126,7 +126,9 @@ class OSMNode {
 	}
 }
 
-function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles) {
+function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles, minTileZoom) {
+	if (viewport.zoom < minTileZoom)
+		return [];
 	const project =
 		viewport instanceof _GlobeViewport && viewport.resolution
 			? // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -203,7 +205,7 @@ function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles) {
     return result;
 }
 
-export function getTileIndices({ viewport, maxZoom, minZoom, zRange, extent, tileSize = TILE_SIZE, maxTiles, modelMatrix, modelMatrixInverse, zoomOffset = 0 }) {
+export function getTileIndices({ viewport, maxZoom, minZoom, zRange, extent, tileSize = TILE_SIZE, maxTiles, minTileZoom, modelMatrix, modelMatrixInverse, zoomOffset = 0 }) {
 	let z = viewport.isGeospatial ? Math.round(viewport.zoom + Math.log2(TILE_SIZE / tileSize)) + zoomOffset : Math.ceil(viewport.zoom) + zoomOffset;
 	if (typeof minZoom === "number" && Number.isFinite(minZoom) && z < minZoom) {
 		if (!extent) {
@@ -218,5 +220,5 @@ export function getTileIndices({ viewport, maxZoom, minZoom, zRange, extent, til
 	if (modelMatrix && modelMatrixInverse && extent && !viewport.isGeospatial) {
 		transformedExtent = transformBox(extent, modelMatrix);
 	}
-	return viewport.isGeospatial ? getOSMTileIndices(viewport, z, zRange, extent, maxTiles) : getIdentityTileIndices(viewport, z, tileSize, transformedExtent || DEFAULT_EXTENT, modelMatrixInverse);
+	return viewport.isGeospatial ? getOSMTileIndices(viewport, z, zRange, extent, maxTiles, minTileZoom) : getIdentityTileIndices(viewport, z, tileSize, transformedExtent || DEFAULT_EXTENT, modelMatrixInverse);
 }

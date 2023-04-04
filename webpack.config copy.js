@@ -1,16 +1,13 @@
 const path = require('path');
 
 module.exports = {
-  entry: {
-    "snap4deck": './src/main.js',
-    "snap4deck.min": './src/main.js'
-  },
+  entry: './src/main.js',
   mode: 'production',
   optimization: {
-    minimize: true,
-  },
+        minimize: false
+    },
   output: {
-    filename: '[name].js',
+    filename: 'snap4deck.min.js',
     path: path.resolve(__dirname, 'dist'),
     library: 'snap4deck'
   },

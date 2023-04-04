@@ -8,6 +8,7 @@ import { TerrainWorkerLoader } from "@loaders.gl/terrain";
 import { getURLFromTemplate, urlTemplateToUpdateTrigger } from "../../utils/url-template";
 import { ManagedTerrainTileLayer } from "./managed-terrain-tileset";
 import { TerrainMeshLayer } from "../terrain-mesh-layer/terrain-mesh-layer";
+import { WebMercatorViewport } from "@math.gl/web-mercator";
 
 const defaultProps = {
     ...TileLayer.defaultProps,
@@ -195,6 +196,44 @@ export class ManagedTerrainLayer extends TerrainLayer {
         return Promise.all([terrain, surface, surfaceHeatmap, surfaceTraffic]);
     }
 
+    getElevationPoint(lngLat) {
+        const tileLayer = this.getSubLayers()[0];
+        if (!tileLayer)
+            return;
+        const tiles = tileLayer.state.tileset.tiles;
+        if (!tiles)
+            return;
+        const viewport = this.context.viewport;
+        const [x, y] = viewport.project(lngLat);
+        const [lng, lat] = lngLat;
+        let selectedTile;
+        for (let tile of tiles) {
+            if (tile.bbox.north >= lat && tile.bbox.south <= lat
+                && tile.bbox.east >= lng && tile.bbox.west <= lng) {
+                    selectedTile = tile;
+                    break;
+                }
+        }
+        if (!selectedTile)
+            return;
+        const vertices = selectedTile.layers[0].props.mesh.attributes.POSITION.value;
+        let minDistance;
+        let nearestVertex;
+        for (let i = 0; i < vertices.lenght; i += 3) {
+            const deltaX = x - vertices[i];
+            const deltaY = y - vertices[i + 1];
+            const distance = Math.sqrt((deltaX ** 2) + (deltaY ** 2));
+            if (!minDistance) {
+                minDistance = distance;
+                nearestVertex = i;
+            } else if (minDistance > distance) {
+                minDistance = distance;
+                nearestVertex = i;
+            }
+        }
+        return vertices[nearestVertex + 2];
+    }
+
     renderSubLayers(props) {
         // const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
         const SubLayerClass = this.getSubLayerClass('mesh', TerrainMeshLayer);
@@ -253,8 +292,6 @@ export class ManagedTerrainLayer extends TerrainLayer {
         } = this.props;
 
         if (this.state.isTiled) {
-            // return new ManagedTerrainTileLayer(
-                console.log(this.state.zRange);
             return new TileLayer(
                 this.getSubLayerProps({
                     id: 'tiles'

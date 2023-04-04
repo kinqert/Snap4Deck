@@ -18,26 +18,44 @@ export function getPointTrilateration(A, B, r1, r2) {
     return [P1, P2];
 }
 
+function isPointInsidePolygon(point, polygon) {
+    const [x, y] = point;
+    let isInside = false;
+    let j = polygon.length - 1;
+
+    for (let i = 0; i < polygon.length; i++) {
+        if ((polygon[i][1] < y && polygon[j][1] >= y ||
+            polygon[j][1] < y && polygon[i][1] >= y) &&
+            (polygon[i][0] <= x || polygon[j][0] <= x)) {
+            if (polygon[i][0] + (y - polygon[i][1]) / (polygon[j][1] - polygon[i][1]) * (polygon[j][0] - polygon[i][0]) < x) {
+                isInside = !isInside;
+            }
+        }
+        j = i;
+    }
+
+    return isInside;
+}
 
 export function createSidedPath(path, width) {
     const redPath = [];
+    const redTestPath = [];
+    const greenTestPath = [];
     const greenPath = [];
     const rp1 = [];
     const rp2 = [];
     const gp1 = [];
     const gp2 = [];
-    // const r1 = width;
 
     for (let i = 0; i < path.length; i++) {
-        console.log('calculating point');
         const A = Point.createPointFromWorldCoords(path[i]);
         const B = Point.createPointFromWorldCoords(path[(i + 1) % path.length]);
         const r1 = width * unitsPerMeter(path[i][1]);
         const distance = Point.getDistance(A, B);
         const r2 = Math.sqrt((r1 ** 2) + (distance ** 2));
-        const [C, D] = getPointTrilateration(A.toArray(), B.toArray(), r1, r2);
-        const cPoint = new Point({xyz: C});
-        const dPoint = new Point({xyz: D});
+        const [C, D] = getPointTrilateration(A.toArray2(), B.toArray2(), r1, r2);
+        const cPoint = new Point({ xyz: C });
+        const dPoint = new Point({ xyz: D });
         rp1.push(dPoint);
         gp1.push(cPoint);
     }
@@ -48,9 +66,9 @@ export function createSidedPath(path, width) {
         const r1 = width * unitsPerMeter(path[i][1]);
         const distance = Point.getDistance(A, B);
         const r2 = Math.sqrt((r1 ** 2) + (distance ** 2));
-        const [C, D] = getPointTrilateration(A.toArray(), B.toArray(), r1, r2);
-        const cPoint = new Point({xyz: C});
-        const dPoint = new Point({xyz: D});
+        const [C, D] = getPointTrilateration(A.toArray2(), B.toArray2(), r1, r2);
+        const cPoint = new Point({ xyz: C });
+        const dPoint = new Point({ xyz: D });
         rp2.push(cPoint);
         gp2.push(dPoint);
     }
@@ -70,7 +88,25 @@ export function createSidedPath(path, width) {
 
         redPath.push(finalRed.toLatLng());
         greenPath.push(finalGreen.toLatLng());
+        redTestPath.push(finalRed.toArray2());
+        greenTestPath.push(finalGreen.toArray2());
     }
 
-    return [redPath, greenPath];
+    let isRedInsideGreen = true;
+    let isGreenInsideRed = true;
+    // check test
+    for (let i = 0; i < redPath.length; i++) {
+        const rp = Point.createPointFromWorldCoords(redPath[i]).toArray2();
+        const isRedInside = isPointInsidePolygon(rp, greenTestPath);
+        isRedInsideGreen = isRedInsideGreen && isRedInside;
+        const gp = Point.createPointFromWorldCoords(greenPath[i]).toArray2();
+        const isGreenInside = isPointInsidePolygon(gp, redTestPath);
+        isGreenInsideRed = isGreenInsideRed && isGreenInside;
+    }
+
+    if (isRedInsideGreen && isGreenInsideRed || !isRedInsideGreen && !isGreenInsideRed)
+        console.log('there are some mismatch in creating the polygon');
+
+    return isRedInsideGreen ? [redPath, greenPath] : [greenPath, redPath];
+
 }

@@ -89,7 +89,10 @@ export class Sensor3DLayer extends CompositeLayer {
                 },
                 getText: this.props.getText || "0",
                 getSize: 32,
+                // background: true,
                 getAngle: 0,
+                getColor: [255, 255, 255, 255],
+                // getBackgroundColor: [0, 0, 0, 180],
                 getTextAnchor: 'middle',
                 getAlignmentBaseline: 'center'
             }),

@@ -10,6 +10,8 @@ export class GLBTileSet extends _Tileset2D {
 
 	getTileIndices({ viewport, maxZoom, minZoom, zRange, modelMatrix, modelMatrixInverse }) {
 		const { tileSize, extent, zoomOffset } = this.opts;
+		// if (viewport.zoom <= 14)
+		// 	return [];
 		this.rifViewport = viewport;
 		let indices = getTileIndices({
 			viewport,
@@ -17,7 +19,8 @@ export class GLBTileSet extends _Tileset2D {
 			minZoom,
 			zRange,
 			tileSize,
-			maxTiles: 500,
+			// maxTiles: 500,
+			minTileZoom: 14,
 			extent,
 			modelMatrix,
 			modelMatrixInverse,
