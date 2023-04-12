@@ -33,15 +33,6 @@ export class TreeLayer extends CompositeLayer {
 
     updateState({ props, oldProps, changeFlags }) {
         if (changeFlags.dataChanged) {
-            // const json = [];
-            // const features = props.data.features;
-            // for (let feature of features) {
-            //     json.push({ prop: feature.properties, geometry: feature.geometry });
-            // }
-            // this.setState({
-            //     json
-            // });
-
             const jsonTiles = {};
             const features = props.data.features;
             for (let feature of features) {
@@ -61,20 +52,6 @@ export class TreeLayer extends CompositeLayer {
             this.setState({ jsonTiles });
         }
     }
-
-    // getTiledTreeData(tile) {
-    //     console.log('getTiledData');
-    //     const { data, fetch, model } = this.props;
-    //     const { signal } = tile;
-    //     const json = loadJSONTile(tile, data);
-    //     const gltf = this.state.gltf ? this.state.gltf : fetch(model, {
-    //         propName: 'traffic',
-    //         layer: this,
-    //         loaders: [GLTFLoader],
-    //         signal
-    //     });
-    //     return Promise.all([json, gltf]);
-    // }
 
     getTiledTreeData(tile) {
         const { fetch, model } = this.props;
@@ -107,14 +84,7 @@ export class TreeLayer extends CompositeLayer {
         }
         const { tile } = props;
         const { x, y, z } = tile.index;
-        // const { jsonTiles } = this.state;
-        // if (!jsonTiles.hasOwnProperty(x))
-        //     return;
-        // if (!jsonTiles[x].hasOwnProperty(y))
-        //     return;
-        // const json = jsonTiles[x][y]
 
-        // return new SubLayerClass(props, {
         return new SubLayerClass(props, {
             data: json,
             id: `tree-layer-${z}-${x}-${y}`,
@@ -126,30 +96,6 @@ export class TreeLayer extends CompositeLayer {
             _lighting: 'pbr'
         });
     }
-    // onViewportLoad(tiles) {
-    //     if (!tiles) {
-    //         return;
-    //     }
-
-    //     const { zRange } = this.state;
-    //     const ranges = tiles
-    //         .map(tile => tile.content)
-    //         .filter(Boolean)
-    //         .map(arr => {
-    //             // @ts-ignore
-    //             const bounds = arr[0].header.boundingBox;
-    //             return bounds.map(bound => bound[2]);
-    //         });
-    //     if (ranges.length === 0) {
-    //         return;
-    //     }
-    //     const minZ = Math.min(...ranges.map(x => x[0]));
-    //     const maxZ = Math.max(...ranges.map(x => x[1]));
-
-    //     if (!zRange || minZ < zRange[0] || maxZ > zRange[1]) {
-    //         this.setState({ zRange: [minZ, maxZ] });
-    //     }
-    // }
 
     renderLayers() {
         const {
@@ -175,39 +121,6 @@ export class TreeLayer extends CompositeLayer {
                 id: `${this.props.id}-tiles`,
                 getTileData: this.getTiledTreeData.bind(this),
                 renderSubLayers: this.renderSubLayers.bind(this),
-                // renderSubLayers: (props) => {
-                //     const { model } = this.props;
-                //     // if (!props.data)
-                //     //     return;
-                //     // const [json] = props.data;
-                //     const { tile } = props;
-                //     const { jsonTiles } = this.state;
-                //     const {x,y,z} = tile.index;
-                //     if (!jsonTiles.hasOwnProperty(x))
-                //         return;
-                //     if (!jsonTiles[x].hasOwnProperty(y))
-                //         return;
-                //     const json = jsonTiles[x][y]
-
-                //     return new ScenegraphLayer({
-                //         id: `tree-layer-${z}-${x}-${y}`,
-                //         data: json,
-                //         scenegraph: model,
-                //         getPosition: d => d.geometry.coordinates,
-                //         _lighting: 'pbr'
-                //     });
-                // },
-                // updateTriggers: {
-                //     // getTileData: {
-                //     //     treeData: urlTemplateToUpdateTrigger(elevationData),
-                //     // },
-                //     renderSubLayers: {
-                //         model,
-                //     }
-                // },
-                // TilesetClass: GLBTileSet,
-                // onViewportLoad: this.onViewportLoad.bind(this),
-                // zRange: this.state.zRange || null,
                 tileSize,
                 maxZoom,
                 minZoom,
