@@ -1,13 +1,9 @@
 # Snap4Deck
 
-Estenzione della libreria deck.gl per l'integrazione di snap4city.
+Library extension of deck.gl for Snap4City and the use case of Smart City and Digital Twin
 
-Per informazioni riguardante il codice fare riferimento alla documentazione di deck.gl (https://github.com/visgl/deck.gl/tree/master/docs) e nella cartella docs del progetto.
-
-Inoltre si presuppone la conoscenza di WebGL,  (https://webglfundamentals.org/)
-
-## Compilazione
-Per compiare il codice sorgente usare il comando
+## Compiling
+to compile the source use:
 
 ``` bash
 ./compile.sh
@@ -18,5 +14,3 @@ or
 ``` bash
 npx webpack --config webpack.config.js
 ```
-
-verrà generato il file snap4city.min.js nella directory dist

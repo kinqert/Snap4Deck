@@ -39,7 +39,7 @@ export class CachedGLBLayer extends ScenegraphLayer {
                 mat.pbrMetallicRoughness.metallicFactor = 0.2;
                 mat.pbrMetallicRoughness.roughnessFactor = 1;
             }
-			const gltfObjects = createGLTFObjects(gl, gltf, this._getModelOptions());
+			const gltfObjects = createGLTFObjects(gl, Object.assign({}, gltf), this._getModelOptions());
 			scenegraphData = { gltf, ...gltfObjects };
 
 			waitForGLTFAssets(gltfObjects).then(() => this.setNeedsRedraw()); // eslint-disable-line @typescript-eslint/no-floating-promises

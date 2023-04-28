@@ -43,6 +43,10 @@ export class CrestLayer extends Layer {
 			type: "attribute",
 			value: (d) => d.endColor.map((x) => x / 255),
 		},
+		currentTime: {
+			type: "float",
+			value: 0,
+		}
 	};
 
 	initializeState() {
@@ -121,13 +125,10 @@ export class CrestLayer extends Layer {
 	}
 
 	static INDICES = [
-		0, 1, 2, 0, 2, 1,
-
-		1, 2, 3, 1, 3, 2,
-
-		2, 4, 3, 2, 3, 4,
-
-		3, 4, 5, 3, 5, 4,
+		0, 2, 1,
+		1, 2, 3,
+		2, 4, 3,
+		3, 4, 5,
 	];
 
 	getShaders() {
@@ -151,7 +152,8 @@ export class CrestLayer extends Layer {
 			id: this.props.id,
 			geometry: new Geometry({
 				drawMode: gl.TRIANGLES,
-				vertexCount: 24,
+				vertexCount: 12,
+				// vertexCount: 24,
 				attributes: {
 					positions: new Float32Array(positions),
 					indices: new Uint16Array(CrestLayer.INDICES),
@@ -163,7 +165,13 @@ export class CrestLayer extends Layer {
 
 	draw(opt) {
 		const { model } = this.state;
+		const { currentTime } = this.props;
 
-		if (model) model.draw();
+		if (model) 
+			model.setUniforms({
+				...opt.uniforms,
+				currentTime,
+			})
+			.draw();
 	}
 }

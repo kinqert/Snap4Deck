@@ -31,8 +31,25 @@ async function loadJSONTile(tile, geojson) {
 export class TreeLayer extends CompositeLayer {
     static defaultProps = defaultProps;
 
+    // initializeState() {
+    //     fetch(props.model, {
+    //         propName: 'tree',
+    //         layer: this,
+    //         loaders: [GLTFLoader],
+    //         signal
+    //     }).then((gltf) => this.setState({gltf}));
+    // }
     updateState({ props, oldProps, changeFlags }) {
         if (changeFlags.dataChanged) {
+            // const json = [];
+            // const features = props.data.features;
+            // for (let feature of features) {
+            //     json.push({ prop: feature.properties, geometry: feature.geometry });
+            // }
+            // this.setState({
+            //     json
+            // });
+
             const jsonTiles = {};
             const features = props.data.features;
             for (let feature of features) {
@@ -51,7 +68,30 @@ export class TreeLayer extends CompositeLayer {
             }
             this.setState({ jsonTiles });
         }
+
+        if (props.model !== oldProps.model) {
+            const gltf = this.props.fetch(props.model, {
+                propName: 'tree',
+                layer: this,
+                loaders: [GLTFLoader],
+            }).then((gltf) => this.setState({gltf}));
+            // this.setState({gltf});
+        }
     }
+
+    // getTiledTreeData(tile) {
+    //     console.log('getTiledData');
+    //     const { data, fetch, model } = this.props;
+    //     const { signal } = tile;
+    //     const json = loadJSONTile(tile, data);
+    //     const gltf = this.state.gltf ? this.state.gltf : fetch(model, {
+    //         propName: 'traffic',
+    //         layer: this,
+    //         loaders: [GLTFLoader],
+    //         signal
+    //     });
+    //     return Promise.all([json, gltf]);
+    // }
 
     getTiledTreeData(tile) {
         const { fetch, model } = this.props;
@@ -62,12 +102,14 @@ export class TreeLayer extends CompositeLayer {
         if (!jsonTiles[tile.index.x].hasOwnProperty(tile.index.y))
             return;
         const json = jsonTiles[tile.index.x][tile.index.y]
-        const gltf = this.state.gltf ? this.state.gltf : fetch(model, {
-            propName: 'traffic',
+        const gltf = this.state.gltf ? Promise.resolve(Object.assign({}, this.state.gltf)) : fetch(model, {
+            propName: 'tree',
             layer: this,
             loaders: [GLTFLoader],
             signal
         });
+        // gltf.then((gltf) => this.setState({gltf}));
+        // return Promise.all([json, this.state.gltf]);
         return Promise.all([json, gltf]);
     }
 
@@ -77,18 +119,26 @@ export class TreeLayer extends CompositeLayer {
         if (!props.data)
             return;
         const [json, gltf] = props.data;
-        if (!json || !gltf)
+        // const [json, gltf] = props.data;
+        if (!json)
             return;
-        if (!this.state.gltf) {
-            this.setState(gltf);
-        }
+        // if (!this.state.gltf) {
+        //     console.log('glb not in state');
+        //     // this.setState({ gltf });
+        // }
+        // else {
+        //     console.log('gltf state already saved', gltf);
+        //     // gltf = this.state.gltf;
+        // }
         const { tile } = props;
         const { x, y, z } = tile.index;
 
         return new SubLayerClass(props, {
             data: json,
             id: `tree-layer-${z}-${x}-${y}`,
-            scenegraph: gltf,
+            // scenegraph: gltf,
+            // scenegraph: JSON.parse(JSON.stringify(this.state.gltf)),
+            scenegraph: Object.assign({}, gltf),
             getPosition: d => {
                 const elevation = d.properties && d.properties.elevation ? d.properties.elevation : 0;
                 return [...d.geometry.coordinates, this.props.getElevation(d) || 0];
