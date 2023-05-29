@@ -43,9 +43,29 @@ export class CrestLayer extends Layer {
 			type: "attribute",
 			value: (d) => d.endColor.map((x) => x / 255),
 		},
+		getIndex: {
+			type: "attribute",
+			value: (d) => d.index,
+		},
 		currentTime: {
 			type: "float",
 			value: 0,
+		},
+		isAnimated: {
+			type: "bool",
+			value: true
+		},
+		arrowSize: {
+			type: "float",
+			value: 30
+		},
+		minHeight: {
+			type: "float",
+			value: 5
+		},
+		maxHeight: {
+			type: "float",
+			value: 40
 		}
 	};
 
@@ -62,13 +82,6 @@ export class CrestLayer extends Layer {
 				fp64: this.use64bitPositions(),
 				transition: true,
 				accessor: "getStartPosition",
-			},
-			middlePositions: {
-				size: 3,
-				type: gl.DOUBLE,
-				fp64: this.use64bitPositions(),
-				transition: true,
-				accessor: "getMiddlePosition",
 			},
 			endPositions: {
 				size: 3,
@@ -117,19 +130,16 @@ export class CrestLayer extends Layer {
 			this.state.model = this._getModel(gl);
 			this.getAttributeManager().invalidateAll();
 		}
+		if (changeFlags.updateTriggersChanged) {
+			for (let trigger of Object.keys(changeFlags.updateTriggersChanged))
+				this.getAttributeManager().invalidate(trigger);
+		}
 	}
 
 	_getDelta(a, b) {
 		const diff = a >= b ? a - b : b - a;
 		return (a >= b ? b : a) + diff;
 	}
-
-	static INDICES = [
-		0, 2, 1,
-		1, 2, 3,
-		2, 4, 3,
-		3, 4, 5,
-	];
 
 	getShaders() {
 		return Object.assign({}, super.getShaders(), {
@@ -139,24 +149,25 @@ export class CrestLayer extends Layer {
 		});
 	}
 
+	static POSITIONS = [
+		// top left
+		0, 0, 1,
+		// bottom left
+		0, 0, 0,
+		// top right
+		1, 1, 1,
+		// bottom right
+		1, 1, 0,
+	];
+
 	_getModel(gl) {
-		const positions = [
-			-1, -1, 0, -1, -1, 1,
-
-			0, 0, 0, 0, 0, 1,
-
-			1, 1, 0, 1, 1, 1,
-		];
 		return new Model(gl, {
 			...this.getShaders(),
 			id: this.props.id,
 			geometry: new Geometry({
-				drawMode: gl.TRIANGLES,
-				vertexCount: 12,
-				// vertexCount: 24,
+				drawMode: gl.TRIANGLE_STRIP,
 				attributes: {
-					positions: new Float32Array(positions),
-					indices: new Uint16Array(CrestLayer.INDICES),
+					positions: new Float32Array(CrestLayer.POSITIONS),
 				},
 			}),
 			isInstanced: true,
@@ -165,12 +176,22 @@ export class CrestLayer extends Layer {
 
 	draw(opt) {
 		const { model } = this.state;
-		const { currentTime } = this.props;
+		const {
+			currentTime,
+			isAnimated,
+			arrowSize,
+			minHeight,
+			maxHeight,
+		} = this.props;
 
 		if (model) 
 			model.setUniforms({
 				...opt.uniforms,
 				currentTime,
+				isAnimated,
+				arrowSize,
+				minHeight,
+				maxHeight
 			})
 			.draw();
 	}

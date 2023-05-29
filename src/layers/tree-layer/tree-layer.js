@@ -9,7 +9,7 @@ import { ScenegraphLayer } from '@deck.gl/mesh-layers';
 import { GLTFLoader } from '@loaders.gl/gltf';
 
 const defaultProps = {
-    ...TileLayer.defaultProps,
+    ...GLBTileLayer.defaultProps,
     model: { type: 'string', value: null },
 }
 
@@ -69,14 +69,14 @@ export class TreeLayer extends CompositeLayer {
             this.setState({ jsonTiles });
         }
 
-        if (props.model !== oldProps.model) {
-            const gltf = this.props.fetch(props.model, {
-                propName: 'tree',
-                layer: this,
-                loaders: [GLTFLoader],
-            }).then((gltf) => this.setState({gltf}));
-            // this.setState({gltf});
-        }
+        // if (props.model !== oldProps.model) {
+        //     const gltf = this.props.fetch(props.model, {
+        //         propName: 'tree',
+        //         layer: this,
+        //         loaders: [GLTFLoader],
+        //     }).then((gltf) => this.setState({gltf: Object.assign({}, gltf)}));
+        //     // this.setState({gltf});
+        // }
     }
 
     // getTiledTreeData(tile) {
@@ -149,8 +149,8 @@ export class TreeLayer extends CompositeLayer {
 
     renderLayers() {
         const {
-            model,
             tileSize,
+            maxTiles,
             maxZoom,
             minZoom,
             extent,
@@ -172,6 +172,7 @@ export class TreeLayer extends CompositeLayer {
                 getTileData: this.getTiledTreeData.bind(this),
                 renderSubLayers: this.renderSubLayers.bind(this),
                 tileSize,
+                maxTiles,
                 maxZoom,
                 minZoom,
                 minTileZoom: 14,

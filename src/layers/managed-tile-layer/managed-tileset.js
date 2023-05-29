@@ -132,7 +132,7 @@ function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles, minTileZoom
 	const project =
 		viewport instanceof _GlobeViewport && viewport.resolution
 			? // eslint-disable-next-line @typescript-eslint/unbound-method
-			  viewport.projectPosition
+			viewport.projectPosition
 			: null;
 
 	// Get the culling volume of the current camera
@@ -187,22 +187,22 @@ function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles, minTileZoom
 	}
 	const height = viewport.height;
 	const width = viewport.width;
-	const lat_rif = viewport.unproject([width/2, height])[1];
-	const lng_rif = viewport.unproject([width/2, height])[0];
+	const lat_rif = viewport.unproject([width / 2, height])[1];
+	const lng_rif = viewport.unproject([width / 2, height])[0];
 
 	let result = Array.from(root.getSelected()).sort((a, b) => {
-	    const lat_a = tile2lat(a.y, 18);
-	    const lng_a = tile2lng(a.x, 18);
-	    const delta_a = getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
-	    const lat_b = tile2lat(b.y, 18);
-	    const lng_b = tile2lng(b.x, 18);
-	    const delta_b = getMeterDistance(lat_b, lng_b, lat_rif, lng_rif);
-	    return delta_a - delta_b;
+		const lat_a = tile2lat(a.y, 18);
+		const lng_a = tile2lng(a.x, 18);
+		const delta_a = getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
+		const lat_b = tile2lat(b.y, 18);
+		const lng_b = tile2lng(b.x, 18);
+		const delta_b = getMeterDistance(lat_b, lng_b, lat_rif, lng_rif);
+		return delta_a - delta_b;
 	});
 
-    if (maxTiles && maxTiles > 0)
-        return result.slice(0, maxTiles);
-    return result;
+	if (maxTiles && maxTiles > 0)
+		return result.slice(0, maxTiles);
+	return result;
 }
 
 export function getTileIndices({ viewport, maxZoom, minZoom, zRange, extent, tileSize = TILE_SIZE, maxTiles, minTileZoom, modelMatrix, modelMatrixInverse, zoomOffset = 0 }) {
@@ -221,4 +221,83 @@ export function getTileIndices({ viewport, maxZoom, minZoom, zRange, extent, til
 		transformedExtent = transformBox(extent, modelMatrix);
 	}
 	return viewport.isGeospatial ? getOSMTileIndices(viewport, z, zRange, extent, maxTiles, minTileZoom) : getIdentityTileIndices(viewport, z, tileSize, transformedExtent || DEFAULT_EXTENT, modelMatrixInverse);
+}
+
+export class OrderedTileSet extends _Tileset2D {
+	rifViewport;
+
+	getTileIndices({ viewport, maxZoom, minZoom, zRange, modelMatrix, modelMatrixInverse }) {
+		const { tileSize, extent, zoomOffset, maxTiles } = this.opts;
+		this.rifViewport = viewport;
+		let indices = getTileIndices({
+			viewport,
+			maxZoom,
+			minZoom,
+			zRange,
+			tileSize,
+			// maxTiles: maxTiles || 200,
+			minTileZoom: 14,
+			extent,
+			modelMatrix,
+			modelMatrixInverse,
+			zoomOffset: zoomOffset,
+			// zoomOffset: zoomOffset || 18 - parseInt(viewport.zoom),
+		});
+		return indices;
+	}
+
+	_resizeCache() {
+		const { _cache, opts } = this;
+
+		const maxCacheSize =
+			opts.maxCacheSize ||
+			// @ts-expect-error called only when selectedTiles is initialized
+			(opts.maxCacheByteSize ? Infinity : DEFAULT_CACHE_SCALE * this.selectedTiles.length);
+		const maxCacheByteSize = opts.maxCacheByteSize || Infinity;
+
+		const overflown = _cache.size > maxCacheSize || this._cacheByteSize > maxCacheByteSize;
+
+		if (overflown) {
+			for (const [id, tile] of _cache) {
+				if (!tile.isVisible && !tile.isSelected) {
+					// delete tile
+					this._cacheByteSize -= opts.maxCacheByteSize ? tile.byteLength : 0;
+					_cache.delete(id);
+					this.opts.onTileUnload?.(tile);
+				}
+				if (_cache.size <= maxCacheSize && this._cacheByteSize <= maxCacheByteSize) {
+					break;
+				}
+			}
+			this._rebuildTree();
+			this._dirty = true;
+		}
+		if (this._dirty) {
+			// sort by zoom level so that smaller tiles are displayed on top
+			this._tiles = Array.from(this._cache.values()).sort((t1, t2) => t1.zoom - t2.zoom);
+
+			this._dirty = false;
+		}
+	}
+
+	_rebuildTree() {
+		const { _cache } = this;
+
+		// Reset states
+		for (const tile of _cache.values()) {
+			tile.parent = null;
+			if (tile.children) {
+				tile.children.length = 0;
+			}
+		}
+
+		// Rebuild tree
+		for (const tile of _cache.values()) {
+			const parent = this._getNearestAncestor(tile);
+			tile.parent = parent;
+			if (parent?.children) {
+				parent.children.push(tile);
+			}
+		}
+	}
 }

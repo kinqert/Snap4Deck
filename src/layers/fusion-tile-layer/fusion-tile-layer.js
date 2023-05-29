@@ -1,42 +1,7 @@
-import { TileLayer, _Tileset2D } from "@deck.gl/geo-layers";
-import { _GlobeViewport, _flatten as flatten } from "@deck.gl/core";
+import { TileLayer } from "@deck.gl/geo-layers";
 
-import { getTileIndices } from "../managed-tile-layer/managed-tileset";
+export default class FusionTileLayer extends TileLayer {
 
-// const DEFAULT_CACHE_SCALE = 1000;
-
-export class GLBTileSet extends _Tileset2D {
-	rifViewport;
-
-	getTileIndices({ viewport, maxZoom, minZoom, zRange, modelMatrix, modelMatrixInverse }) {
-		const { tileSize, extent, zoomOffset, maxTiles } = this.opts;
-		// if (viewport.zoom <= 14)
-		// 	return [];
-		this.rifViewport = viewport;
-		let indices = getTileIndices({
-			viewport,
-			maxZoom,
-			minZoom,
-			zRange,
-			tileSize,
-			maxTiles: maxTiles || 200,
-			minTileZoom: 14,
-			extent,
-			modelMatrix,
-			modelMatrixInverse,
-			zoomOffset: 18 - parseInt(viewport.zoom),
-		});
-		return indices;
-	}
-}
-
-const defaultProps = {
-	...TileLayer.defaultProps,
-	maxTiles: 200,
-};
-
-export class GLBTileLayer extends TileLayer {
-	static defaultProps = defaultProps;
 	updateState({ props, changeFlags }) {
 		let { tileset } = this.state;
 		const propsChanged = changeFlags.propsOrDataChanged || changeFlags.updateTriggersChanged;
@@ -45,13 +10,13 @@ export class GLBTileLayer extends TileLayer {
 		if (!tileset) {
 			tileset = new GLBTileSet({
 				...this._getTilesetOptions(),
-				maxTiles: props.maxTiles || 200,
+				// maxTiles: props.maxTiles || 200,
 			});
 			this.setState({ tileset });
 		} else if (propsChanged) {
 			tileset.setOptions({
 				...this._getTilesetOptions(),
-				maxTiles: props.maxTiles || 200,
+				// maxTiles: props.maxTiles || 200,
 			});
 
 			if (dataChanged) {
