@@ -1,16 +1,24 @@
+export function getURLFromTemplates(template, properties) {
+	if (!template || !template.length) {
+		return null;
+	}
+
+	if (Array.isArray(template)) {
+		let urls = [];
+		for (let temp of template) {
+			urls.push(getURLFromTemplate(temp, properties));
+		}
+		return urls;
+	}
+	return getURLFromTemplate(template, properties);
+}
+
 export function getURLFromTemplate(template, properties) {
 	if (!template || !template.length) {
 		return null;
 	}
 
-	// supporting deckgl version 8.8
-	var x, y, z;
-	if (properties.x) {
-		({ x, y, z } = properties);
-	} else {
-		({ x, y, z } = properties.index);
-	}
-
+	const { x, y, z } = properties.index;
 	if (Array.isArray(template)) {
 		const index = Math.abs(x + y) % template.length;
 		template = template[index];
@@ -27,8 +35,12 @@ export function getURLFromTemplate(template, properties) {
 		)
 		.replace(
 			/\{selection\}/g,
-			`${bbox.west};${bbox.south};${bbox.east};${bbox.north}`
-		);
+			`${bbox.south};${bbox.west};${bbox.north};${bbox.east}`
+		)
+		.replace(/\{north\}/g, `${bbox.north}`)
+		.replace(/\{south\}/g, `${bbox.south}`)
+		.replace(/\{west\}/g, `${bbox.west}`)
+		.replace(/\{east\}/g, `${bbox.east}`);
 }
 
 export function urlTemplateToUpdateTrigger(template) {

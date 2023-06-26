@@ -14,3 +14,4 @@ Object.assign(deck, deck_meshlayers);
 export * from './core/bundle';
 export * from './layers/bundle';
 export * from './factories/bundle';
+export * from './utils/bundle';

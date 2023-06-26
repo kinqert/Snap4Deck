@@ -1,12 +1,16 @@
 import { CompositeLayer } from '@deck.gl/core';
 import { TileLayer } from '@deck.gl/geo-layers';
+import { GLTFLoader } from '@loaders.gl/gltf';
+import { load } from '@loaders.gl/core';
+import { fetchFile } from '@loaders.gl/core';
 
 import { lon2tile, lat2tile } from '../../utils/tile-utils';
 import { CachedGLBLayer, waitForGLTFAssets } from '../cached-glb-layer/cached-glb-layer';
 import { urlTemplateToUpdateTrigger } from '../../utils/url-template';
 import { GLBTileLayer, GLBTileSet } from '../glb-tile-layer/glb-tileset';
 import { ScenegraphLayer } from '@deck.gl/mesh-layers';
-import { GLTFLoader } from '@loaders.gl/gltf';
+// import { GLTFLoader } from '@loaders.gl/gltf';
+import { FusionTileLayer, geojsonFusionBottomUp, geojsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
 
 const defaultProps = {
     ...GLBTileLayer.defaultProps,
@@ -31,25 +35,8 @@ async function loadJSONTile(tile, geojson) {
 export class TreeLayer extends CompositeLayer {
     static defaultProps = defaultProps;
 
-    // initializeState() {
-    //     fetch(props.model, {
-    //         propName: 'tree',
-    //         layer: this,
-    //         loaders: [GLTFLoader],
-    //         signal
-    //     }).then((gltf) => this.setState({gltf}));
-    // }
     updateState({ props, oldProps, changeFlags }) {
         if (changeFlags.dataChanged) {
-            // const json = [];
-            // const features = props.data.features;
-            // for (let feature of features) {
-            //     json.push({ prop: feature.properties, geometry: feature.geometry });
-            // }
-            // this.setState({
-            //     json
-            // });
-
             const jsonTiles = {};
             const features = props.data.features;
             for (let feature of features) {
@@ -68,30 +55,21 @@ export class TreeLayer extends CompositeLayer {
             }
             this.setState({ jsonTiles });
         }
+        if ((props.scenegraph != oldProps.scenegraph || !this.state.GLTFPromise) && props.model) {
+            const gltfPromise = fetchFile(props.model)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => {
+                    // Instantiate the GLTF model
+                    return arrayBuffer
+                    // const gltf = load(arrayBuffer, GLTFLoader);
+                    // return gltf;
+                });
 
-        // if (props.model !== oldProps.model) {
-        //     const gltf = this.props.fetch(props.model, {
-        //         propName: 'tree',
-        //         layer: this,
-        //         loaders: [GLTFLoader],
-        //     }).then((gltf) => this.setState({gltf: Object.assign({}, gltf)}));
-        //     // this.setState({gltf});
-        // }
+            this.setState({ GLTFPromise: gltfPromise });
+            // this.setState({ GLTFPromise: load(props.model, { gltf: {} }) });
+            // this.setState({GLTFPromise: load(props.model, {gltf: {}})});
+        }
     }
-
-    // getTiledTreeData(tile) {
-    //     console.log('getTiledData');
-    //     const { data, fetch, model } = this.props;
-    //     const { signal } = tile;
-    //     const json = loadJSONTile(tile, data);
-    //     const gltf = this.state.gltf ? this.state.gltf : fetch(model, {
-    //         propName: 'traffic',
-    //         layer: this,
-    //         loaders: [GLTFLoader],
-    //         signal
-    //     });
-    //     return Promise.all([json, gltf]);
-    // }
 
     getTiledTreeData(tile) {
         const { fetch, model } = this.props;
@@ -102,43 +80,28 @@ export class TreeLayer extends CompositeLayer {
         if (!jsonTiles[tile.index.x].hasOwnProperty(tile.index.y))
             return;
         const json = jsonTiles[tile.index.x][tile.index.y]
-        const gltf = this.state.gltf ? Promise.resolve(Object.assign({}, this.state.gltf)) : fetch(model, {
-            propName: 'tree',
-            layer: this,
-            loaders: [GLTFLoader],
-            signal
-        });
-        // gltf.then((gltf) => this.setState({gltf}));
-        // return Promise.all([json, this.state.gltf]);
-        return Promise.all([json, gltf]);
+        const gltf = this.state.GLTFPromise;
+        return Promise.all([{ features: json }, gltf]);
     }
 
     renderSubLayers(props) {
         const SubLayerClass = this.getSubLayerClass('mesh', CachedGLBLayer);
         const { model } = this.props;
-        if (!props.data)
+        const { data } = props;
+        if (!data || !data[0] || !data[1])
             return;
-        const [json, gltf] = props.data;
-        // const [json, gltf] = props.data;
-        if (!json)
+        const [json, gltf] = data;
+        if (!json || json.length == 0)
             return;
-        // if (!this.state.gltf) {
-        //     console.log('glb not in state');
-        //     // this.setState({ gltf });
-        // }
-        // else {
-        //     console.log('gltf state already saved', gltf);
-        //     // gltf = this.state.gltf;
-        // }
+
         const { tile } = props;
         const { x, y, z } = tile.index;
 
+        const scenegraph = load(this.state.GLTFPromise, GLTFLoader);
         return new SubLayerClass(props, {
-            data: json,
+            data: json.features,
             id: `tree-layer-${z}-${x}-${y}`,
-            // scenegraph: gltf,
-            // scenegraph: JSON.parse(JSON.stringify(this.state.gltf)),
-            scenegraph: Object.assign({}, gltf),
+            scenegraph: scenegraph,
             getPosition: d => {
                 const elevation = d.properties && d.properties.elevation ? d.properties.elevation : 0;
                 return [...d.geometry.coordinates, this.props.getElevation(d) || 0];
@@ -162,20 +125,36 @@ export class TreeLayer extends CompositeLayer {
             maxCacheByteSize,
             refinementStrategy
         } = this.props;
+        const { jsonTiles } = this.state;
 
-        return new GLBTileLayer(
-            this.getSubLayerProps({
-                id: 'tiles'
-            }),
+        return new FusionTileLayer(
+            // this.getSubLayerProps({
+            //     id: 'tiles'
+            // }),
             {
                 id: `${this.props.id}-tiles`,
+                // data: jsonTiles,
                 getTileData: this.getTiledTreeData.bind(this),
                 renderSubLayers: this.renderSubLayers.bind(this),
+                fusionTopDown: (parent, current, index) => {
+                    if (!current)
+                        current = [[], []];
+                    if (!parent || !parent[0] || !parent[1])
+                        return;
+                    return [geojsonFusionTopDown(parent[0], current[0], index), parent[1]];
+                },
+                fusionBottomUP: (child, current) => {
+                    if (!current)
+                        current = [[], []];
+                    if (!child || !child[0] || !child[1])
+                        return;
+                    return [geojsonFusionBottomUp(child[0], current[0]), child[1]];
+                },
                 tileSize,
-                maxTiles,
-                maxZoom,
-                minZoom,
-                minTileZoom: 14,
+                // maxTiles,
+                // maxZoom,
+                // minZoom,
+                // minTileZoom: 14,
                 extent,
                 maxRequests,
                 onTileLoad,
@@ -183,7 +162,8 @@ export class TreeLayer extends CompositeLayer {
                 onTileError,
                 maxCacheSize,
                 maxCacheByteSize,
-                refinementStrategy
+                refinementStrategy,
+                deepLoad: 18
             }
         );
     }

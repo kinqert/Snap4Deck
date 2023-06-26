@@ -15,6 +15,22 @@ export function tile2lat(y, z) {
 	return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
+export function tile2BB(x, y, z) {
+	const bb = [];
+	bb.push(tile2lng(x, z), tile2lat(y+1, z));
+	bb.push(tile2lng(x+1, z), tile2lat(y, z));
+	return bb;
+}
+
+export function tile2Bbox(x, y, z) {
+	return {
+		west: tile2lng(x, z),
+		south: tile2lat(y+1, z),
+		east: tile2lng(x+1, z),
+		north: tile2lat(y, z)
+	}
+}
+
 export function getMeterDistanceFromCoords(coord1, coord2) {
 	return getMeterDistance(coord1[1], coord1[0], coord2[1], coord2[0]);
 }

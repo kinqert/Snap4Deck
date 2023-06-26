@@ -23,7 +23,6 @@ async function waitWhileCondition(condition) {
   }
 }
 
-
 export class CachedGLBLayer extends ScenegraphLayer {
 	_updateScenegraph() {
 		const props = this.props;
@@ -39,7 +38,7 @@ export class CachedGLBLayer extends ScenegraphLayer {
                 mat.pbrMetallicRoughness.metallicFactor = 0.2;
                 mat.pbrMetallicRoughness.roughnessFactor = 1;
             }
-			const gltfObjects = createGLTFObjects(gl, Object.assign({}, gltf), this._getModelOptions());
+			const gltfObjects = createGLTFObjects(gl, gltf, this._getModelOptions());
 			scenegraphData = { gltf, ...gltfObjects };
 
 			waitForGLTFAssets(gltfObjects).then(() => this.setNeedsRedraw()); // eslint-disable-line @typescript-eslint/no-floating-promises
@@ -59,7 +58,7 @@ export class CachedGLBLayer extends ScenegraphLayer {
 			this._applyAnimationsProp(scenegraph, animator, props._animations);
 			this.setState({ scenegraph, animator });
 		} else if (scenegraph !== null) {
-			log.warn("invalid scenegraph:", scenegraph)();
+			console.warn("invalid scenegraph:", scenegraph)();
 		}
 	}
 }

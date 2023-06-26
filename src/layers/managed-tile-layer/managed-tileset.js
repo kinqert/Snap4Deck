@@ -6,6 +6,7 @@ import { CullingVolume, Plane, AxisAlignedBoundingBox, makeOrientedBoundingBoxFr
 import { tile2lng, tile2lat, getMeterDistance } from "../../utils/tile-utils";
 
 const TILE_SIZE = 512;
+const DEFAULT_CACHE_SCALE = 5;
 
 class OSMNode {
 	x;
@@ -236,7 +237,7 @@ export class OrderedTileSet extends _Tileset2D {
 			zRange,
 			tileSize,
 			// maxTiles: maxTiles || 200,
-			minTileZoom: 14,
+			// minTileZoom: 14,
 			extent,
 			modelMatrix,
 			modelMatrixInverse,
