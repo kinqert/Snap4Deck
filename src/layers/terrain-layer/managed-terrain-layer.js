@@ -315,7 +315,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
                         }
                     },
                     onViewportLoad: this.onViewportLoad.bind(this),
-                    zRange: this.state.zRange || null,
+                    // zRange: this.state.zRange || null,
                     tileSize,
                     maxZoom,
                     minZoom,

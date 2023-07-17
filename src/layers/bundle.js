@@ -7,4 +7,7 @@ export {ManagedTileLayer} from './managed-tile-layer/managed-tile-layer';
 export {Sensor3DLayer} from './sensor-3D-layer.js/sensor-3D-layer';
 export {WhatifLayer} from './whatif-layer/whatif-layer';
 export {TreeLayer} from './tree-layer/tree-layer';
+export {BuildingLayer} from './building-layer/building-layer';
+export {BuildingTileLayer} from './building-tile-layer/building-tile-layer';
+export {FusionIconLayer} from './fusion-icon-layer/fusion-icon-layer';
 export * from './fusion-tile-layer/fusion-tile-layer';

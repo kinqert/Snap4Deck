@@ -17,16 +17,16 @@ export function tile2lat(y, z) {
 
 export function tile2BB(x, y, z) {
 	const bb = [];
-	bb.push(tile2lng(x, z), tile2lat(y+1, z));
-	bb.push(tile2lng(x+1, z), tile2lat(y, z));
+	bb.push(tile2lng(x, z), tile2lat(y + 1, z));
+	bb.push(tile2lng(x + 1, z), tile2lat(y, z));
 	return bb;
 }
 
 export function tile2Bbox(x, y, z) {
 	return {
 		west: tile2lng(x, z),
-		south: tile2lat(y+1, z),
-		east: tile2lng(x+1, z),
+		south: tile2lat(y + 1, z),
+		east: tile2lng(x + 1, z),
 		north: tile2lat(y, z)
 	}
 }
@@ -46,4 +46,23 @@ export function getMeterDistance(lat1, lon1, lat2, lon2) {
 	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
 	return R * c; // in metres
+}
+
+export function getSubTiles2(tile_x, tile_y, z, z1) {
+	var subTiles = [];
+
+}
+
+export function getParentTile(tile_x, tile_y, z, z1) {
+	return [Math.floor(tile_x / Math.pow(2, z1 - z)), Math.floor(tile_y / Math.pow(2, z1 - z))];
+}
+
+export function getSubTiles(tile_x, tile_y, z, z1) {
+	var subTiles = [];
+	for (var sub_x = tile_x * Math.pow(2, (z1 - z)); sub_x < (tile_x + 1) * Math.pow(2, (z1 - z)); sub_x++) {
+		for (var sub_y = tile_y * Math.pow(2, (z1 - z)); sub_y < (tile_y + 1) * Math.pow(2, (z1 - z)); sub_y++) {
+			subTiles.push([sub_x, sub_y]);
+		}
+	}
+	return subTiles;
 }

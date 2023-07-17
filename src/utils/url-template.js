@@ -24,28 +24,30 @@ export function getURLFromTemplate(template, properties) {
 		template = template[index];
 	}
 	const { bbox } = properties;
-	return template
-		.replace(/\{x\}/g, x)
-		.replace(/\{y\}/g, y)
-		.replace(/\{z\}/g, z)
-		.replace(/\{-y\}/g, Math.pow(2, z) - y - 1)
-		.replace(
+	if (x && y && z)
+		template = template.replace(/\{x\}/g, x)
+			.replace(/\{y\}/g, y)
+			.replace(/\{z\}/g, z)
+			.replace(/\{-y\}/g, Math.pow(2, z) - y - 1)
+	if (bbox)
+		template = template.replace(
 			/\{bbox\}/g,
 			`${bbox.west},${bbox.south},${bbox.east},${bbox.north}`
 		)
-		.replace(
-			/\{selection\}/g,
-			`${bbox.south};${bbox.west};${bbox.north};${bbox.east}`
-		)
-		.replace(/\{north\}/g, `${bbox.north}`)
-		.replace(/\{south\}/g, `${bbox.south}`)
-		.replace(/\{west\}/g, `${bbox.west}`)
-		.replace(/\{east\}/g, `${bbox.east}`);
+			.replace(
+				/\{selection\}/g,
+				`${bbox.south};${bbox.west};${bbox.north};${bbox.east}`
+			)
+			.replace(/\{north\}/g, `${bbox.north}`)
+			.replace(/\{south\}/g, `${bbox.south}`)
+			.replace(/\{west\}/g, `${bbox.west}`)
+			.replace(/\{east\}/g, `${bbox.east}`);
+	return template
 }
 
 export function urlTemplateToUpdateTrigger(template) {
-    if (Array.isArray(template)) {
-        return template.join(';');
-    }
-    return template || '';
+	if (Array.isArray(template)) {
+		return template.join(';');
+	}
+	return template || '';
 }

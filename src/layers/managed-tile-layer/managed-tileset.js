@@ -228,7 +228,7 @@ export class OrderedTileSet extends _Tileset2D {
 	rifViewport;
 
 	getTileIndices({ viewport, maxZoom, minZoom, zRange, modelMatrix, modelMatrixInverse }) {
-		const { tileSize, extent, zoomOffset, maxTiles } = this.opts;
+		const { tileSize, extent, zoomOffset, maxTiles, minTileZoom } = this.opts;
 		this.rifViewport = viewport;
 		let indices = getTileIndices({
 			viewport,
@@ -237,7 +237,7 @@ export class OrderedTileSet extends _Tileset2D {
 			zRange,
 			tileSize,
 			// maxTiles: maxTiles || 200,
-			// minTileZoom: 14,
+			minTileZoom,
 			extent,
 			modelMatrix,
 			modelMatrixInverse,
