@@ -29,7 +29,7 @@ export function geojsonFusionTopDown(parent, current, index) {
 		for (let feature of features) {
 			const geometry = feature.geometry;
 			const coordinates = geometry.type === "Point" ? geometry.coordinates : geometry.coordinates[0];
-			const [lng, lat] = coordinates.slice(0,2);
+			const [lng, lat] = coordinates.slice(0, 2);
 			const x1 = lon2tile(lng, z);
 			const y1 = lat2tile(lat, z);
 			if (x == x1, y == y1) {
@@ -145,7 +145,7 @@ export class FusionTileLayer extends TileLayer {
 	}
 
 	_fusionBottomUp(fusionedTile, x, y, z, deepLevel, signal) {
-			console.log('fusion bottom up');
+		console.log('fusion bottom up');
 		const { fusionBottomUP, getFusionCoords } = this.props;
 		// const
 		const [x1, y1, z1] = [x * 2, y * 2, z + 1];
@@ -191,6 +191,20 @@ export class FusionTileLayer extends TileLayer {
 			return fusionedTile;
 	}
 
+	updateCommonState(tile) {
+		const { statePasstrough } = this.props;
+		let state = [];
+
+		if (statePasstrough) {
+			if (Array.isArray(tile.layers))
+				for (let layer of tile.layers)
+					state.push(layer.state);
+			else
+				state = tile.state;
+			this.setState({ commonState: state });
+		}
+	}
+
 	getTileData(tile) {
 		const { data, getTileData, fetch, fusionBottomUP, fusionTopDown, statePasstrough, deepLoad, getFusionCoords, offsetLoad } = this.props;
 		const { tileset, commonState, lastViewZoom } = this.state;
@@ -209,8 +223,10 @@ export class FusionTileLayer extends TileLayer {
 				const dataTile = tileset._cache.get(`${x}-${y}-${z}`);
 				if (dataTile && dataTile.content)
 					return dataTile;
+				else
+					jumpZoom = 1;
 			}
-			this.setState({ lastViewZoom: viewport.zoom });
+			// this.setState({ lastViewZoom: viewport.zoom });
 		}
 
 		if (offsetLoad) {
@@ -222,15 +238,24 @@ export class FusionTileLayer extends TileLayer {
 		}
 
 		// TOP -> DOWN
-		const [parent_x, parent_y] = getParentTile(x, y, z, z - jumpZoom);
-		const parentTile = tileset._cache.get(`${parent_x}-${parent_y}-${z - jumpZoom}`);
+		// let [parent_x, parent_y] = getParentTile(x, y, z, z - jumpZoom - 1);
+		// let parentTile = tileset._cache.get(`${parent_x}-${parent_y}-${z - jumpZoom - 1}`);
+		// if (parentTile && parentTile.content) {
+		// 	console.log('fusion top down');
+		// 	if (statePasstrough && !commonState && parentTile.state) {
+		// 		const newState = parentTile.state;
+		// 		this.setState({ commonState: newState });
+		// 	}
+		// 	return fusionTopDown(parentTile.content, {}, { x, y, z }, getFusionCoords);
+		// }
+		let [parent_x, parent_y] = getParentTile(x, y, z, z - jumpZoom);
+		let parentTile = tileset._cache.get(`${parent_x}-${parent_y}-${z - jumpZoom}`);
 		// const parentTile = tileset._cache.get(`${Math.floor(x / 2)}-${Math.floor(y / 2)}-${z - 1}`);
 		if (parentTile && parentTile.content) {
 			console.log('fusion top down');
-			if (statePasstrough && !commonState && parentTile.state) {
-				const newState = parentTile.state;
-				this.setState({ commonState: newState });
-			}
+			// if (!commonState) {
+			// 	this.updateCommonState(parentTile);
+			// }
 			return fusionTopDown(parentTile.content, {}, { x, y, z }, getFusionCoords);
 		}
 		// BOTTOM -> UP
@@ -241,6 +266,7 @@ export class FusionTileLayer extends TileLayer {
 			return fusionedTile;
 
 		if (getTileData) {
+			console.log('getting full tile')
 			return getTileData(tile);
 		}
 		if (fetch && tile.url) {
@@ -250,6 +276,8 @@ export class FusionTileLayer extends TileLayer {
 	}
 
 	renderLayers() {
+		const { viewport } = this.context;
+		this.setState({ lastViewZoom: viewport.zoom });
 		const tiles = this.state.tileset.tiles
 			.map((tile) => {
 				const subLayerProps = this.getSubLayerPropsByTile(tile);
@@ -257,17 +285,30 @@ export class FusionTileLayer extends TileLayer {
 				if (!tile.isLoaded && !tile.content) {
 					// nothing to show
 				} else if (!tile.layers) {
+					const { commonState } = this.state;
 					const layers = this.renderSubLayers({
 						...this.props,
 						id: `${this.id}-${tile.id}`,
 						data: tile.content,
 						_offset: 0,
 						tile,
+						commonState,
+						updateCommonState: (state) => {
+							this.setState({ commonState: {
+								...this.state.commonState,
+								...state
+							} });
+						}
 					});
 
-					if (this.props.statePasstrough && this.state.commonState && layers) {
-						layers.state = this.state.commonState;
-					}
+					// if (this.props.statePasstrough && this.state.commonState && layers) {
+					// 	// layers.state = this.state.commonState;
+					// 	if (Array.isArray(layers)) {
+					// 		for (let i = 0; i < this.state.commonState; i++)
+					// 			layers[i].setState({...this.state.commonState[i]});
+					// 	} else
+					// 		layers.setState({...this.state.commonState});
+					// }
 					tile.layers = flatten(layers, Boolean).map((layer) =>
 						layer.clone({
 							tile,

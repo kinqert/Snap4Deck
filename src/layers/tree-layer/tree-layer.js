@@ -101,6 +101,7 @@ export class TreeLayer extends CompositeLayer {
         return new SubLayerClass(props, {
             data: json.features,
             id: `tree-layer-${z}-${x}-${y}`,
+            pickable: true,
             scenegraph: scenegraph,
             getPosition: d => {
                 const elevation = d.properties && d.properties.elevation ? d.properties.elevation : 0;

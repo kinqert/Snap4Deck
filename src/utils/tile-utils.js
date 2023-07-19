@@ -54,7 +54,7 @@ export function getSubTiles2(tile_x, tile_y, z, z1) {
 }
 
 export function getParentTile(tile_x, tile_y, z, z1) {
-	return [Math.floor(tile_x / Math.pow(2, z1 - z)), Math.floor(tile_y / Math.pow(2, z1 - z))];
+	return [Math.floor(tile_x / Math.pow(2, z - z1)), Math.floor(tile_y / Math.pow(2, z - z1))];
 }
 
 export function getSubTiles(tile_x, tile_y, z, z1) {
