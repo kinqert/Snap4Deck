@@ -192,11 +192,11 @@ function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles, minTileZoom
 	const lng_rif = viewport.unproject([width / 2, height])[0];
 
 	let result = Array.from(root.getSelected()).sort((a, b) => {
-		const lat_a = tile2lat(a.y, 18);
-		const lng_a = tile2lng(a.x, 18);
+		const lat_a = tile2lat(a.y, a.z);
+		const lng_a = tile2lng(a.x, a.z);
 		const delta_a = getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
-		const lat_b = tile2lat(b.y, 18);
-		const lng_b = tile2lng(b.x, 18);
+		const lat_b = tile2lat(b.y, b.z);
+		const lng_b = tile2lng(b.x, b.z);
 		const delta_b = getMeterDistance(lat_b, lng_b, lat_rif, lng_rif);
 		return delta_a - delta_b;
 	});

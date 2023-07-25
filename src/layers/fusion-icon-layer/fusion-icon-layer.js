@@ -76,7 +76,6 @@ export class FusionIconLayer extends IconLayer {
 
     _onUpdate(iconsData) {
         if (iconsData && Object.keys(iconsData).length != 0) {
-            console.log('updating common state')
             this.props.updateCommonState(iconsData);
             this.setState({ iconsData, isUpdated: true });
         }
@@ -91,7 +90,6 @@ export class FusionIconLayer extends IconLayer {
         const { iconAtlas, iconMapping, data, getIcon, textureParameters } = props;
 
         if (props.commonState) {
-            console.log("recived common state");
             this.setState({ 
                 iconsData: props.commonState,
                 isUpdated: false,
@@ -113,7 +111,6 @@ export class FusionIconLayer extends IconLayer {
         // prepacked iconAtlas from user
         if (prePacked) {
             if (oldProps.iconMapping !== props.iconMapping) {
-                console.log('invalidating get icon');
                 attributeManager.invalidate('getIcon');
             }
         } else if (
@@ -131,11 +128,6 @@ export class FusionIconLayer extends IconLayer {
             this.state.model = this._getModel(gl);
             attributeManager.invalidateAll();
         }
-        // if (!iconsTexture) {
-        //     const newTextures = iconManager.getTexture();
-        //     if (newTextures)
-        //         this.setState({ iconsTexture: newTextures });
-        // }
     }
     draw({ uniforms }) {
         const { sizeScale, sizeMinPixels, sizeMaxPixels, sizeUnits, billboard, alphaCutoff } = this.props;

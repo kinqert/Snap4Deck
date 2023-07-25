@@ -145,9 +145,7 @@ export class FusionTileLayer extends TileLayer {
 	}
 
 	_fusionBottomUp(fusionedTile, x, y, z, deepLevel, signal) {
-		console.log('fusion bottom up');
 		const { fusionBottomUP, getFusionCoords } = this.props;
-		// const
 		const [x1, y1, z1] = [x * 2, y * 2, z + 1];
 		let promised = [];
 
@@ -226,7 +224,6 @@ export class FusionTileLayer extends TileLayer {
 				else
 					jumpZoom = 1;
 			}
-			// this.setState({ lastViewZoom: viewport.zoom });
 		}
 
 		if (offsetLoad) {
@@ -238,26 +235,12 @@ export class FusionTileLayer extends TileLayer {
 		}
 
 		// TOP -> DOWN
-		// let [parent_x, parent_y] = getParentTile(x, y, z, z - jumpZoom - 1);
-		// let parentTile = tileset._cache.get(`${parent_x}-${parent_y}-${z - jumpZoom - 1}`);
-		// if (parentTile && parentTile.content) {
-		// 	console.log('fusion top down');
-		// 	if (statePasstrough && !commonState && parentTile.state) {
-		// 		const newState = parentTile.state;
-		// 		this.setState({ commonState: newState });
-		// 	}
-		// 	return fusionTopDown(parentTile.content, {}, { x, y, z }, getFusionCoords);
-		// }
 		let [parent_x, parent_y] = getParentTile(x, y, z, z - jumpZoom);
 		let parentTile = tileset._cache.get(`${parent_x}-${parent_y}-${z - jumpZoom}`);
-		// const parentTile = tileset._cache.get(`${Math.floor(x / 2)}-${Math.floor(y / 2)}-${z - 1}`);
 		if (parentTile && parentTile.content) {
-			console.log('fusion top down');
-			// if (!commonState) {
-			// 	this.updateCommonState(parentTile);
-			// }
 			return fusionTopDown(parentTile.content, {}, { x, y, z }, getFusionCoords);
 		}
+
 		// BOTTOM -> UP
 		const deepLevel = deepLoad ? deepLoad : z + 1;
 		let fusionedTile = {};
@@ -301,14 +284,6 @@ export class FusionTileLayer extends TileLayer {
 						}
 					});
 
-					// if (this.props.statePasstrough && this.state.commonState && layers) {
-					// 	// layers.state = this.state.commonState;
-					// 	if (Array.isArray(layers)) {
-					// 		for (let i = 0; i < this.state.commonState; i++)
-					// 			layers[i].setState({...this.state.commonState[i]});
-					// 	} else
-					// 		layers.setState({...this.state.commonState});
-					// }
 					tile.layers = flatten(layers, Boolean).map((layer) =>
 						layer.clone({
 							tile,

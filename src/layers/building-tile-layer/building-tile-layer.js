@@ -3,7 +3,7 @@ import { GLTFLoader } from '@loaders.gl/gltf';
 import { load } from '@loaders.gl/core';
 import { fetchFile } from '@loaders.gl/core';
 
-import { lon2tile, lat2tile, getSubTiles } from '../../utils/tile-utils';
+import { lon2tile, lat2tile, getSubTiles, tile2lng, tile2lat } from '../../utils/tile-utils';
 import { BuildingLayer } from '../building-layer/building-layer';
 import { GLBTileLayer } from '../glb-tile-layer/glb-tileset';
 import { FusionTileLayer, geojsonFusionBottomUp, geojsonFusionTopDown, jsonFusionBottomUp, jsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
@@ -20,48 +20,91 @@ export class BuildingTileLayer extends CompositeLayer {
 
     getTiledBuildingData(tile) {
         const { data, fetch, includedTiles } = this.props;
+        console.log('getting tile building')
         let dataPromised = [];
         let tilePromised = [];
+        let tiles = [];
         const { x, y, z } = tile.index;
         const subIndices = getSubTiles(x, y, z, 18);
         const { signal } = tile;
-        let buildingUrl = this.props.data.split('/').slice(0, -1).join('/');
+        let buildingUrl = data.split('/').slice(0, -1).join('/');
         buildingUrl = buildingUrl.replace('https://www.snap4city.org', 'http://dashboard');
         for (let subIndex of subIndices) {
             const s_x = subIndex[0];
             const s_y = subIndex[1];
-            if (!includedTiles ||
-                (includedTiles.hasOwnProperty(s_x) && includedTiles[s_x].includes(`${s_y}`)
-                )) {
-                let tile = {
-                    index: {
-                        x: s_x,
-                        y: s_y,
-                        z: 18
+            if (includedTiles) {
+                let founded = false;
+                let x_included = includedTiles[s_x];
+                if (x_included) {
+                    for (let y_included of x_included) {
+                        if (y_included === `${s_y}`) {
+                            founded = true;
+                            break;
+                        }
                     }
                 }
-                let promise = fetch(getURLFromTemplate(data.replace('https://www.snap4city.org', 'http://dashboard'), tile),
-                    { propName: 'data', layer: this, loaders: [], signal });
-                promise.then((json) => {
-                    const modelUrl = getURLFromTemplate(buildingUrl, tile);
-                    let buildings = [];
-                    for (let building of json) {
-                        building.usedModel = building.models[0];
-                        for (let model of building.models) {
-                            if (!model.type.includes('LoD3')) {
-                                building.usedModel = model;
-                                break;
-                            }
-                        }
-                        building.glb = modelUrl + '/' + building.usedModel.path;
-                        buildings.push(building);
-                    }
-                    return buildings;
-                });
-                dataPromised.push(promise);
+                if (!founded) {
+                    continue;
+                }
             }
+
+            let tile = {
+                index: {
+                    x: s_x,
+                    y: s_y,
+                    z: 18
+                }
+            }
+            const modelUrl = getURLFromTemplate(buildingUrl, tile);
+            tiles.push(
+                {
+                    glb: `${modelUrl}/tile.glb`,
+                    coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
+                }
+            );
+            let promise = fetch(getURLFromTemplate(data.replace('https://www.snap4city.org', 'http://dashboard'), tile),
+                { propName: 'data', layer: this, loaders: [], signal }).then((json) => {
+                const modelUrl = getURLFromTemplate(buildingUrl, tile);
+                let buildings = [];
+                buildings.push(
+                    {
+                        buildings: json,
+                        glb: `${modelUrl}/tile.glb`,
+                        coord: json[0].models[0].coords
+                        // coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
+                    }
+                );
+                json = buildings;
+                return buildings;
+            });
+            dataPromised.push(promise);
         }
-        return Promise.all(dataPromised);
+         return Promise.all(dataPromised);
+        // return Promise.all(dataPromised).then((res) => {
+        //     let tiles = [];
+        //     for (let i = 0; i < res.length; i++) {
+        //         const subIndex = subIndices[i];
+        //         const s_x = subIndex[0];
+        //         const s_y = subIndex[1];
+        //         let tile = {
+        //             index: {
+        //                 x: s_x,
+        //                 y: s_y,
+        //                 z: 18
+        //             }
+        //         }
+        //         const modelUrl = getURLFromTemplate(buildingUrl, tile);
+        //         console.log('getting tile building')
+        //         tiles.push(
+        //             {
+        //                 buildings: res[i],
+        //                 glb: `${modelUrl}/tile.glb`,
+        //                 coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
+        //             }
+        //         );
+        //     }
+        //     return tiles;
+        // });
     }
 
     renderSubLayers(props) {
@@ -81,11 +124,16 @@ export class BuildingTileLayer extends CompositeLayer {
             pickable: true,
             id: `building-layer-${z}-${x}-${y}`,
             getPosition: d => {
-                if (Array.isArray(d.usedModel.coords) && d.usedModel.coords.length == 2)
-                    return [...d.usedModel.coords, -47.79]
-                return [0,0,0];
+                if (Array.isArray(d.coord) && d.coord.length == 2)
+                    return [...d.coord, -47.79]
+                // if (Array.isArray(d.usedModel.coords) && d.usedModel.coords.length == 2)
+                //     return [...d.usedModel.coords, -47.79]
+                return [0, 0, 0];
             },
-            _lighting: 'pbr'
+            _lighting: 'pbr',
+            onClick: (info, event) => {
+                console.log('sub building clicked', info, event);
+            }
         });
     }
 
@@ -116,7 +164,8 @@ export class BuildingTileLayer extends CompositeLayer {
                 id: `${this.props.id}-tiles`,
                 getTileData: this.getTiledBuildingData.bind(this),
                 renderSubLayers: this.renderSubLayers.bind(this),
-                getFusionCoords: d => d.usedModel.coords,
+                getFusionCoords: d => d.coord,
+                // getFusionCoords: d => d.usedModel.coords,
                 fusionTopDown: (parent, current, index, getFusionCoords) => {
                     let json = [];
                     json = json.concat(...parent);
@@ -131,7 +180,7 @@ export class BuildingTileLayer extends CompositeLayer {
                 // maxTiles,
                 // maxZoom,
                 // minZoom,
-                // minTileZoom: 14,
+                minTileZoom: 14,
                 extent,
                 maxRequests,
                 onTileLoad,
@@ -140,7 +189,7 @@ export class BuildingTileLayer extends CompositeLayer {
                 maxCacheSize,
                 maxCacheByteSize,
                 refinementStrategy,
-                // deepLoad: 18
+                deepLoad: 18
             }
         );
     }

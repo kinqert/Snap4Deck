@@ -71,16 +71,16 @@ export class BuildingLayer extends ScenegraphLayer {
                             d.scenegraph = this._updateScenegraph(scenegraph, d.index);
                         });
                     });
-            if (i != 0 && i % 50 == 0) {
-                lastIndex = i + 1;
-                break;
-            }
+            // if (i != 0 && i % 50 == 0) {
+            //     lastIndex = i + 1;
+            //     break;
+            // }
         }
-        if (lastIndex != index && lastIndex < this.props.data.length) {
-            setTimeout(() => {
-                this.downloadBuildings(lastIndex, end, domain);
-            }, 10);
-        }
+        // if (lastIndex != index && lastIndex < this.props.data.length) {
+        //     setTimeout(() => {
+        //         this.downloadBuildings(lastIndex, end, domain);
+        //     }, 10);
+        // }
     }
 
     _updateScenegraph(scenegraph, index) {
@@ -162,7 +162,7 @@ export class BuildingLayer extends ScenegraphLayer {
         const numInstances = 1;
         let i = 0;
         for (let d of this.props.data) {
-            const uPickingColor = this.encodePickingColor(i);
+            let j = 0;
             if (d.scenegraph) {
                 const uPositions = [];
                 const uPositions64Low = [];
@@ -171,28 +171,37 @@ export class BuildingLayer extends ScenegraphLayer {
                     uPositions64Low.push(fp64LowPart(pos));
                 }
 
-                d.scenegraph.traverse((model, { worldMatrix }) => {
-                    model.model.setInstanceCount(numInstances);
-                    model.updateModuleSettings(moduleParameters);
-                    model.draw({
-                        parameters,
-                        uniforms: {
-                            picked: d.picked || false,
-                            uPositions,
-                            uPositions64Low,
-                            uPickingColor,
-                            sizeScale,
-                            opacity,
-                            sizeMinPixels,
-                            sizeMaxPixels,
-                            composeModelMatrix: shouldComposeModelMatrix(viewport, coordinateSystem),
-                            sceneModelMatrix: worldMatrix,
-                            u_Camera: model.model.getUniforms().project_uCameraPosition
-                        }
+                const mainNode = d.scenegraph.children[0];
+                const buildingsNode = mainNode.children;
+
+                for (let buildingNode of buildingsNode) {
+                    const uPickingColor = this.encodePickingColor(i);
+                    // draw
+                    buildingNode.traverse((model, { worldMatrix }) => {
+                        const uPickingColor = this.encodePickingColor(i);
+                        model.model.setInstanceCount(numInstances);
+                        model.updateModuleSettings(moduleParameters);
+                        model.draw({
+                            parameters,
+                            uniforms: {
+                                picked: d.buildings[j].picked || false,
+                                uPositions,
+                                uPositions64Low,
+                                uPickingColor,
+                                sizeScale,
+                                opacity,
+                                sizeMinPixels,
+                                sizeMaxPixels,
+                                composeModelMatrix: shouldComposeModelMatrix(viewport, coordinateSystem),
+                                sceneModelMatrix: worldMatrix,
+                                u_Camera: model.model.getUniforms().project_uCameraPosition
+                            }
+                        });
                     });
-                });
+                    i++;
+                    j++;
+                }
             }
-            i++;
         }   
     }
 }

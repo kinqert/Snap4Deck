@@ -284,7 +284,6 @@ export default class IconManager {
 
         iconsData = iconsData ? iconsData : {};
 
-        console.log('packing icons');
         const icons = Object.values(getDiffIcons(data, getIcon, {}) || {});
         // const icons = Object.values(getDiffIcons(data, getIcon, this._mapping) || {});
 
