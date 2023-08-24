@@ -2,6 +2,7 @@ import { CompositeLayer } from '@deck.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 import { load } from '@loaders.gl/core';
 import { fetchFile } from '@loaders.gl/core';
+import GL from '@luma.gl/constants';
 
 import { lon2tile, lat2tile, getSubTiles, tile2lng, tile2lat } from '../../utils/tile-utils';
 import { BuildingLayer } from '../building-layer/building-layer';
@@ -20,7 +21,6 @@ export class BuildingTileLayer extends CompositeLayer {
 
     getTiledBuildingData(tile) {
         const { data, fetch, includedTiles } = this.props;
-        console.log('getting tile building')
         let dataPromised = [];
         let tilePromised = [];
         let tiles = [];
@@ -28,7 +28,7 @@ export class BuildingTileLayer extends CompositeLayer {
         const subIndices = getSubTiles(x, y, z, 18);
         const { signal } = tile;
         let buildingUrl = data.split('/').slice(0, -1).join('/');
-        buildingUrl = buildingUrl.replace('https://www.snap4city.org', 'http://dashboard');
+        // buildingUrl = buildingUrl.replace('https://www.snap4city.org', 'http://dashboard');
         for (let subIndex of subIndices) {
             const s_x = subIndex[0];
             const s_y = subIndex[1];
@@ -62,24 +62,28 @@ export class BuildingTileLayer extends CompositeLayer {
                     coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
                 }
             );
-            let promise = fetch(getURLFromTemplate(data.replace('https://www.snap4city.org', 'http://dashboard'), tile),
+            // let promise = fetch(getURLFromTemplate(data.replace('https://www.snap4city.org', 'http://dashboard'), tile),
+            let promise = fetch(getURLFromTemplate(data, tile),
                 { propName: 'data', layer: this, loaders: [], signal }).then((json) => {
-                const modelUrl = getURLFromTemplate(buildingUrl, tile);
-                let buildings = [];
-                buildings.push(
-                    {
-                        buildings: json,
-                        glb: `${modelUrl}/tile.glb`,
-                        coord: json[0].models[0].coords
-                        // coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
+                    const modelUrl = getURLFromTemplate(buildingUrl, tile);
+                    let buildings = [];
+                    for (let d of json) {
+                        d.tileUrl = modelUrl;
                     }
-                );
-                json = buildings;
-                return buildings;
-            });
+                    buildings.push(
+                        {
+                            buildings: json,
+                            glb: `${modelUrl}/tile.glb`,
+                            coord: json[0].models[0].coords,
+                            // coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
+                        }
+                    );
+                    json = buildings;
+                    return buildings;
+                });
             dataPromised.push(promise);
         }
-         return Promise.all(dataPromised);
+        return Promise.all(dataPromised);
         // return Promise.all(dataPromised).then((res) => {
         //     let tiles = [];
         //     for (let i = 0; i < res.length; i++) {
@@ -112,12 +116,21 @@ export class BuildingTileLayer extends CompositeLayer {
         const { data } = props;
         if (!data)
             return;
-        console.log('rendering sub layer');
         let json = [];
         json = json.concat(...data);
 
         const { tile } = props;
         const { x, y, z } = tile.index;
+
+        // if (z == 17 && json.length > 4) {
+        //     console.warn('error in layer');
+        //     console.warn('parent tile ', x, y, z);
+
+        //     for (let d of json) {
+        //         console.warn('child tile 18 ', lon2tile(d.coord[0], 18), lat2tile(d.coord[1], 18))
+        //         console.warn('child tile 17 ', lon2tile(d.coord[0], 17), lat2tile(d.coord[1], 17))
+        //     }
+        // }
 
         return new SubLayerClass(props, {
             data: json,
@@ -131,6 +144,9 @@ export class BuildingTileLayer extends CompositeLayer {
                 return [0, 0, 0];
             },
             _lighting: 'pbr',
+            // parameters: {
+            //     [GL.CULL_FACE]: true,
+            // },
             onClick: (info, event) => {
                 console.log('sub building clicked', info, event);
             }
@@ -154,7 +170,6 @@ export class BuildingTileLayer extends CompositeLayer {
         } = this.props;
         const { jsonTiles } = this.state;
 
-        console.log('creating fusion')
         return new FusionTileLayer(
             // this.getSubLayerProps({
             //     id: 'tiles'
@@ -180,6 +195,7 @@ export class BuildingTileLayer extends CompositeLayer {
                 // maxTiles,
                 // maxZoom,
                 // minZoom,
+                // minZoom: 18,
                 minTileZoom: 14,
                 extent,
                 maxRequests,
@@ -189,7 +205,7 @@ export class BuildingTileLayer extends CompositeLayer {
                 maxCacheSize,
                 maxCacheByteSize,
                 refinementStrategy,
-                deepLoad: 18
+                // deepLoad: 18
             }
         );
     }

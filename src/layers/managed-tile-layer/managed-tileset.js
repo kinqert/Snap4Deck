@@ -201,8 +201,8 @@ function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles, minTileZoom
 		return delta_a - delta_b;
 	});
 
-	if (maxTiles && maxTiles > 0)
-		return result.slice(0, maxTiles);
+	// if (maxTiles && maxTiles > 0)
+	// 	return result.slice(0, maxTiles);
 	return result;
 }
 

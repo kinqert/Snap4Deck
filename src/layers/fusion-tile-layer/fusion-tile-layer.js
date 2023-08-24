@@ -84,32 +84,41 @@ export function jsonFusionBottomUp(child, current, getFusionCoords) {
 export class FusionTileLayer extends TileLayer {
 	static defaultProps = defaultProps;
 
-	updateState({ props, changeFlags }) {
-		let { tileset } = this.state;
-		const propsChanged = changeFlags.propsOrDataChanged || changeFlags.updateTriggersChanged;
-		const dataChanged = changeFlags.dataChanged || (changeFlags.updateTriggersChanged && (changeFlags.updateTriggersChanged.all || changeFlags.updateTriggersChanged.getTileData));
+	// updateState({ props, changeFlags }) {
+	// 	let { tileset } = this.state;
+	// 	const propsChanged = changeFlags.propsOrDataChanged || changeFlags.updateTriggersChanged;
+	// 	const dataChanged = changeFlags.dataChanged || (changeFlags.updateTriggersChanged && (changeFlags.updateTriggersChanged.all || changeFlags.updateTriggersChanged.getTileData));
 
-		if (!tileset) {
-			tileset = new OrderedTileSet({
-				...this._getTilesetOptions(),
-				minTileZoom: this.props.minTileZoom,
-			});
-			this.setState({ tileset });
-		} else if (propsChanged) {
-			tileset.setOptions({
-				...this._getTilesetOptions(),
-			});
+	// 	if (!tileset) {
+	// 		tileset = new OrderedTileSet({
+	// 			...this._getTilesetOptions(),
+	// 			minTileZoom: this.props.minTileZoom,
+	// 		});
+	// 		this.setState({ tileset });
+	// 	} else if (propsChanged) {
+	// 		tileset.setOptions({
+	// 			...this._getTilesetOptions(),
+	// 		});
 
-			if (dataChanged) {
-				tileset.reloadAll();
-			} else {
-				this.state.tileset.tiles.forEach((tile) => {
-					tile.layers = null;
-				});
-			}
-		}
+	// 		if (dataChanged) {
+	// 			tileset.reloadAll();
+	// 		} else {
+	// 			this.state.tileset.tiles.forEach((tile) => {
+	// 				tile.layers = null;
+	// 			});
+	// 		}
+	// 	}
 
-		this._updateTileset();
+	// 	this._updateTileset();
+	// }
+
+	getCachedTile(tile) {
+		const { x, y, z } = tile.index;
+		const { tileset } = this.state;
+		const cache = tileset._cache.get(`${x}-${y}-${z}`);
+		if (cache && cache.content)
+			return cache;
+		return null;
 	}
 
 	_fusionProcessChild(fusionedTile, tile, signal) {
@@ -145,7 +154,7 @@ export class FusionTileLayer extends TileLayer {
 	}
 
 	_fusionBottomUp(fusionedTile, x, y, z, deepLevel, signal) {
-		const { fusionBottomUP, getFusionCoords } = this.props;
+		const { fusionBottomUP, getFusionCoords, deepLoad } = this.props;
 		const [x1, y1, z1] = [x * 2, y * 2, z + 1];
 		let promised = [];
 
@@ -165,6 +174,13 @@ export class FusionTileLayer extends TileLayer {
 			index: { x: x1 + 1, y: y1 + 1, z: z1 },
 			bbox: tile2Bbox(x1 + 1, y1 + 1, z1),
 		};
+		if ( !deepLoad &&
+			!this.getCachedTile(childProp1) &&
+			!this.getCachedTile(childProp2) &&
+			!this.getCachedTile(childProp3) &&
+			!this.getCachedTile(childProp4)
+		)
+			return null;
 
 		let result, cached;
 		[result, cached] = this._fusionProcessChild(fusionedTile, childProp1, signal);
@@ -217,7 +233,7 @@ export class FusionTileLayer extends TileLayer {
 			jumpZoom = Math.abs(Math.floor(lastViewZoom) - Math.floor(viewport.zoom));
 			if (jumpZoom >= 1)
 				console.log('need to jump');
-			if (jumpZoom == 0) {
+			else if (jumpZoom == 0) {
 				const dataTile = tileset._cache.get(`${x}-${y}-${z}`);
 				if (dataTile && dataTile.content)
 					return dataTile;
@@ -249,7 +265,6 @@ export class FusionTileLayer extends TileLayer {
 			return fusionedTile;
 
 		if (getTileData) {
-			console.log('getting full tile')
 			return getTileData(tile);
 		}
 		if (fetch && tile.url) {

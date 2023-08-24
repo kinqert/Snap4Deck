@@ -2,11 +2,11 @@ export default `\
 #version 300 es
 
 // Instance attributes
-in vec3 instancePositions;
-in vec3 instancePositions64Low;
-in vec4 instanceColors;
-in vec3 instancePickingColors;
-in mat3 instanceModelMatrix;
+// in vec3 instancePositions;
+// in vec3 instancePositions64Low;
+// in vec4 instanceColors;
+// in vec3 instancePickingColors;
+// in mat3 instanceModelMatrix;
 in vec3 instanceTranslation;
 in float INDICES;
 
@@ -46,13 +46,14 @@ out float index;
 
 // Main
 void main(void) {
+    mat3 instanceModelMatrix = mat3(1.);
   #if defined(HAS_UV) && !defined(MODULE_PBR)
     vTEXCOORD_0 = TEXCOORD_0;
     geometry.uv = vTEXCOORD_0;
   #endif
 
-  geometry.worldPosition = instancePositions;
-  geometry.pickingColor = instancePickingColors;
+  geometry.worldPosition = uPositions;
+  geometry.pickingColor = uPickingColor;
 
   vec3 normal = vec3(0.0, 0.0, 1.0);
   #ifdef MODULE_PBR
@@ -72,7 +73,7 @@ void main(void) {
     // call project_normal before setting position to avoid rotation
     geometry.normal = project_normal(normal);
     geometry.worldPosition += pos;
-    gl_Position = project_position_to_clipspace(pos + instancePositions, instancePositions64Low, vec3(0.0), geometry.position);
+    gl_Position = project_position_to_clipspace(pos + uPositions, uPositions64Low, vec3(0.0), geometry.position);
   }
   else {
     pos = project_size(pos);
@@ -102,7 +103,8 @@ void main(void) {
   index = 0.;
   if (INDICES == 1.)
     index = 1.;
-  vColor = instanceColors;
+  vColor = vec4(1.);
+//   vColor = instanceColors;
   DECKGL_FILTER_COLOR(vColor, geometry);
   picking_setPickingColor(uPickingColor);
 }

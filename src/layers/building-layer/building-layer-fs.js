@@ -31,8 +31,14 @@ void main(void) {
     #endif
   #endif
 
-  if (picked)
-    fragmentColor -= vec4(0.,0.,0.2,0.);
+  fragmentColor.r *= 1.3;
+  fragmentColor.g *= 1.3;
+  fragmentColor.b *= 1.3;
+  if (picked) {
+    fragmentColor.r *= 1.6;
+    fragmentColor.g *= 1.6;
+    fragmentColor.b *= 0.4;
+  }
   fragmentColor.a *= opacity;
   DECKGL_FILTER_COLOR(fragmentColor, geometry);
   fragmentColor = picking_filterPickingColor(fragmentColor);

@@ -99,6 +99,7 @@ export class TreeLayer extends CompositeLayer {
 
         const scenegraph = load(this.state.GLTFPromise, GLTFLoader);
         return new SubLayerClass(props, {
+            ...this.props,
             data: json.features,
             id: `tree-layer-${z}-${x}-${y}`,
             pickable: true,
