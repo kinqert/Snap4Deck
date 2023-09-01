@@ -7,7 +7,7 @@ export default `\
 // in vec4 instanceColors;
 // in vec3 instancePickingColors;
 // in mat3 instanceModelMatrix;
-in vec3 instanceTranslation;
+// in vec3 instanceTranslation;
 in float INDICES;
 
 // Uniforms
@@ -46,14 +46,19 @@ out float index;
 
 // Main
 void main(void) {
+    // v1
     mat3 instanceModelMatrix = mat3(1.);
   #if defined(HAS_UV) && !defined(MODULE_PBR)
     vTEXCOORD_0 = TEXCOORD_0;
     geometry.uv = vTEXCOORD_0;
   #endif
 
+  // v1
   geometry.worldPosition = uPositions;
   geometry.pickingColor = uPickingColor;
+  // v2
+//   geometry.worldPosition = instancePositions;
+//   geometry.pickingColor = instancePickingColors;
 
   vec3 normal = vec3(0.0, 0.0, 1.0);
   #ifdef MODULE_PBR
@@ -65,7 +70,8 @@ void main(void) {
   float originalSize = project_size_to_pixel(sizeScale);
   float clampedSize = clamp(originalSize, sizeMinPixels, sizeMaxPixels);
 
-  vec3 pos = (instanceModelMatrix * (sceneModelMatrix * POSITION).xyz) * sizeScale * (clampedSize / originalSize) + instanceTranslation;
+  vec3 pos = (instanceModelMatrix * (sceneModelMatrix * POSITION).xyz) * sizeScale * (clampedSize / originalSize);
+//   vec3 pos = (instanceModelMatrix * (sceneModelMatrix * POSITION).xyz) * sizeScale * (clampedSize / originalSize) + instanceTranslation;
   if(composeModelMatrix) {
     DECKGL_FILTER_SIZE(pos, geometry);
     // using instancePositions as world coordinates
@@ -73,13 +79,19 @@ void main(void) {
     // call project_normal before setting position to avoid rotation
     geometry.normal = project_normal(normal);
     geometry.worldPosition += pos;
+    // v1
     gl_Position = project_position_to_clipspace(pos + uPositions, uPositions64Low, vec3(0.0), geometry.position);
+    // v2
+    // gl_Position = project_position_to_clipspace(pos + instancePositions, instancePositions64Low, vec3(0.0), geometry.position);
   }
   else {
     pos = project_size(pos);
     DECKGL_FILTER_SIZE(pos, geometry);
     // gl_Position = project_position_to_clipspace(uPositions64Low, uPositions, pos, geometry.position);
+
+    // v1
     gl_Position = project_position_to_clipspace(uPositions, uPositions64Low, pos, geometry.position);
+    // v2
     // gl_Position = project_position_to_clipspace(instancePositions, instancePositions64Low, pos, geometry.position);
     geometry.normal = project_normal(normal);
   }
@@ -103,7 +115,9 @@ void main(void) {
   index = 0.;
   if (INDICES == 1.)
     index = 1.;
+//v1
   vColor = vec4(1.);
+  //v2
 //   vColor = instanceColors;
   DECKGL_FILTER_COLOR(vColor, geometry);
   picking_setPickingColor(uPickingColor);

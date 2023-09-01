@@ -133,6 +133,9 @@ const defaultProps = {
 export class BuildingLayer extends ScenegraphLayer {
     static defaultProps = defaultProps;
 
+    initializeState() {
+    }
+
     getShaders() {
         const modules = [project32, picking];
 
@@ -142,39 +145,18 @@ export class BuildingLayer extends ScenegraphLayer {
 
         return { vs, fs, modules };
     }
-    // calculatePosition(position) {
-    //     return [11.2558136,43.7695604];
-    // }
-    // initializeState() {
-    //     const attributeManager = this.getAttributeManager();
-    //     // attributeManager is always defined for primitive layers
-    //     attributeManager.addInstanced({
-    //         instancePositions: {
-    //             size: 3,
-    //             type: GL.DOUBLE,
-    //             fp64: this.use64bitPositions(),
-    //             accessor: "getPosition",
-    //             update: this.calculatePosition,
-    //             transition: true
-    //         },
-    //         instanceColors: {
-    //             type: GL.UNSIGNED_BYTE,
-    //             size: this.props.colorFormat.length,
-    //             accessor: 'getColor',
-    //             normalized: true,
-    //             defaultValue: [255,255,255,255],
-    //             transition: true
-    //         },
-    //         instanceModelMatrix: MATRIX_ATTRIBUTES
-    //     });
-    // }
 
     updateState(params) {
         super.updateState(params);
         const { props, oldProps } = params;
 
+        this.setState({lastIndexBuilding: 0});
         if (props.data !== oldProps.data) {
-            this._loadBuildings();
+            let index = 0;
+            for (let d of props.data) {
+                d.scenegraph = this._updateScenegraph(d.scenegraph, index);
+                index++;
+            }
         }
     }
 
@@ -182,22 +164,15 @@ export class BuildingLayer extends ScenegraphLayer {
         const totalBuildings = this.props.data.length;
 
         this.downloadBuildings(0, totalBuildings);
-        // this.downloadBuildings(0, totalBuildings, 'http://dashboard');
-
-        // this.downloadBuildings(0, Math.floor(totalBuildings / 3), 'https://www.snap4city.org');
-        // this.downloadBuildings(Math.floor(totalBuildings / 3), Math.floor((totalBuildings / 3) * 2), 'https://www.snap4solutions.org');
-        // this.downloadBuildings(Math.floor((totalBuildings / 3) * 2), totalBuildings, 'https://www.snap4industry.org');
     }
 
     downloadBuildings(index, end, domain) {
-        // const domains = ['https://www.snap4city.org', 'https://www.snap4solutions.org', 'https://www.snap4industry.org'];
         const domains = ['https://www.snap4city.org', 'https://www.snap4solutions.org', 'https://www.snap4industry.org'];
         let lastIndex = index;
         for (let i = index || 0; i < end; i++) {
             let d = this.props.data[i];
             d.index = i;
-            // if (d.glb && !d.scenegraph)
-            if (d.glb)
+            if (d.glb && !d.scenegraph)
                 fetchFile(d.glb.replace('https://www.snap4city.org', domains[i % 3]))
                     .then(response => response.arrayBuffer())
                     .then(arrayBuffer => {
@@ -213,7 +188,7 @@ export class BuildingLayer extends ScenegraphLayer {
         if (lastIndex != index && lastIndex < this.props.data.length) {
             setTimeout(() => {
                 this.downloadBuildings(lastIndex, end, domain);
-            }, 10);
+            }, 1);
         }
     }
 
@@ -228,19 +203,10 @@ export class BuildingLayer extends ScenegraphLayer {
         } else if (scenegraph && !scenegraph.gltf) {
             // Converts loaders.gl gltf to luma.gl scenegraph using the undocumented @luma.gl/experimental function
             const gltf = scenegraph;
-            // for (let mat of gltf.materials) {
-            //     mat.pbrMetallicRoughness.metallicFactor = 0.2;
-            //     mat.pbrMetallicRoughness.roughnessFactor = 1;
-            // }
-            // gltf.materials[0].pbrMetallicRoughness.baseColorFactor = [0,0,0,1];
+            // console.log('loading materials');
             for (let mat of gltf.materials) {
                 mat.pbrMetallicRoughness.metallicFactor = 0.5;
                 mat.pbrMetallicRoughness.roughnessFactor = 1;
-                // if (mat.pbrMetallicRoughness.baseColorFactor) {
-                //     mat.pbrMetallicRoughness.baseColorFactor[0] -= (Math.random()) / 10;
-                //     mat.pbrMetallicRoughness.baseColorFactor[1] -= (Math.random()) / 10;
-                //     mat.pbrMetallicRoughness.baseColorFactor[2] += (Math.random() * 2 - 1) / 10;
-                // }
             }
             const gltfObjects = createGLTFObjects(gl, gltf, this._getModelOptions());
             scenegraphData = { gltf, ...gltfObjects };
@@ -253,13 +219,10 @@ export class BuildingLayer extends ScenegraphLayer {
 
         const options = { layer: this, gl };
         const scenegraphElab = props.getScene(scenegraphData, options);
-        // const animator = props.getAnimator(scenegraphData, options);
 
         if (scenegraphElab instanceof ScenegraphNode) {
             this._deleteScenegraph();
-            // this._applyAllAttributes(scenegraphElab, index);
-            // this._applyAnimationsProp(scenegraph, animator, props._animations);
-            // this.setState({ scenegraph, animator });
+            this._applyAllAttributes(scenegraphElab, index);
             return scenegraphElab;
         } else if (scenegraphElab !== null) {
             console.warn("invalid scenegraph:", scenegraphElab)();
@@ -267,49 +230,41 @@ export class BuildingLayer extends ScenegraphLayer {
     }
 
     _applyAllAttributes(scenegraph, index) {
-        if (this.state.attributesAvailable) {
-            const allAttributes = this.getAttributeManager().getAttributes();
-
-            // const mainNode = scenegraph.children[0];
-            // let buildingsNode = mainNode;
-
-            console.log('applying attributes');
-            delete allAttributes.instancePositions;
-            scenegraph.traverse(model => {
-                this._setModelAttributes(model.model, allAttributes);
-            });
-            // buildingsNode.traverse(model => {
-            //     console.log('inside traverse');
-            //     let attributes = Object.assign({}, allAttributes);
-            //     for (let key in allAttributes) {
-            //         // attributes[key] = {...allAttributes[key]};
-            //         let value = [];
-            //         for (let i = index; i < index + allAttributes[key].size; i++) 
-            //             value.push(allAttributes[key].value[i]);
-            //         attributes[key].value = new allAttributes[key].value.constructor(value);
-            //         attributes.updateBuffer
-            //     }
-            //     attributes.update(this.props.data[index]);
-            //     this.getAttributeManager().update({
-            //         data: this.props.data[index],
-            //         numInstance: 1,
-            //         startIndices: [index],
-            //         startIndex: index,
-            //     });
-            //     this.getAttributeManager().update({
-            //         data: this.props.data[index],
-            //         numInstances: 1,
-            //         props: this.props,
-            //         transitions: this.props.transitions,
-            //         // @ts-ignore (TS2339) property attribute is not present on some acceptable data types
-            //         buffers: this.props.data.attributes,
-            //         context: this
-            //     });
-            //     let modelAttributes = this.getAttributeManager().getAttributes();
-            //     this._setModelAttributes(model.model, modelAttributes);
-            //     // this._setModelAttributes(model.model, allAttributes);
-            // });
+        const uPositions = [];
+        const uPositions64Low = [];
+        var lastIndexBuilding = 0;
+        let j = 0;
+        for (let d of this.props.data) {
+            if (j >= index)
+                break;
+            lastIndexBuilding += d.buildings.length;
+            j++;
         }
+        var d = this.props.data[index];
+        
+        let i = 0;
+        for (let pos of this.props.getPosition(d)) {
+            uPositions.push(pos - fp64LowPart(pos));
+            uPositions64Low.push(fp64LowPart(pos));
+        }
+        scenegraph.traverse((model, { worldMatrix }) => {
+            model.setUniforms({
+                uPositions,
+                uPositions64Low
+            });
+        });
+        const mainNode = scenegraph.children[0];
+        let buildingsNode = mainNode.children;
+        for (let node of buildingsNode) {
+            node.traverse((model, { worldMatrix }) => {
+                const uPickingColor = this.encodePickingColor(lastIndexBuilding + i);
+                model.setUniforms({
+                    uPickingColor
+                });
+            });
+            i++;
+        }
+
     }
 
     _deleteScenegraph() {
@@ -328,58 +283,29 @@ export class BuildingLayer extends ScenegraphLayer {
 
         const { viewport } = this.context;
         const { sizeScale, sizeMinPixels, sizeMaxPixels, opacity, coordinateSystem } = this.props;
-        // const numInstances = this.getNumInstances();
         const numInstances = 1;
         let i = 0;
         for (let d of this.props.data) {
             let j = 0;
             if (d.scenegraph) {
-                const uPositions = [];
-                const uPositions64Low = [];
-                for (let pos of this.props.getPosition(d)) {
-                    uPositions.push(pos - fp64LowPart(pos));
-                    uPositions64Low.push(fp64LowPart(pos));
-                }
-
                 const mainNode = d.scenegraph.children[0];
-                let buildingsNode = mainNode.children;
-
-                if (!d.buildings) {
-                    buildingsNode = [d.scenegraph];
-                }
-                // d.scenegraph.traverse((model, { worldMatrix }) => {
-                //     // const uPickingColor = this.encodePickingColor(i);
-                //     model.model.setInstanceCount(numInstances);
-                //     model.updateModuleSettings(moduleParameters);
-                //     model.draw({
-                //         parameters,
-                //         uniforms: {
-                //             // picked: picked || false,
-                //             sizeScale,
-                //             opacity,
-                //             sizeMinPixels,
-                //             sizeMaxPixels,
-                //             composeModelMatrix: shouldComposeModelMatrix(viewport, coordinateSystem),
-                //             sceneModelMatrix: worldMatrix,
-                //             u_Camera: model.model.getUniforms().project_uCameraPosition
-                //         }
-                //     });
-                // });
-                for (let buildingNode of buildingsNode) {
-                    const uPickingColor = this.encodePickingColor(i);
-                    const picked = d.buildings ? d.buildings[j].picked : d.picked;
-                    // draw
-                    buildingNode.traverse((model, { worldMatrix }) => {
-                        // const uPickingColor = this.encodePickingColor(i);
+                let buildingsNodes = mainNode.children;
+                
+                for (let node of buildingsNodes) {
+                    let picked = false;
+                    for (let building of d.buildings) {
+                        if (node.id === `model_${building.ID}`) {
+                            picked = building.picked || false;
+                            break;
+                        }
+                    }
+                    node.traverse((model, { worldMatrix }) => {
                         model.model.setInstanceCount(numInstances);
                         model.updateModuleSettings(moduleParameters);
                         model.draw({
                             parameters,
                             uniforms: {
                                 picked: picked || false,
-                                uPositions,
-                                uPositions64Low,
-                                uPickingColor,
                                 sizeScale,
                                 opacity,
                                 sizeMinPixels,
@@ -390,8 +316,6 @@ export class BuildingLayer extends ScenegraphLayer {
                             }
                         });
                     });
-                    i++;
-                    j++;
                 }
             }
         }

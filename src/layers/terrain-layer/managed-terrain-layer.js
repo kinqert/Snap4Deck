@@ -9,6 +9,7 @@ import { getURLFromTemplate, urlTemplateToUpdateTrigger } from "../../utils/url-
 import { ManagedTerrainTileLayer } from "./managed-terrain-tileset";
 import { TerrainMeshLayer } from "../terrain-mesh-layer/terrain-mesh-layer";
 import { WebMercatorViewport } from "@math.gl/web-mercator";
+import { FusionTileLayer } from "../fusion-tile-layer/fusion-tile-layer";
 
 const defaultProps = {
     ...TileLayer.defaultProps,
@@ -67,9 +68,13 @@ export class ManagedTerrainLayer extends TerrainLayer {
                     (elevationData.includes('{x}') && elevationData.includes('{y}')) ||
                     elevationData.includes('{bbox}')) || elevations;
             this.setState({
-                isTiled
+                isTiled,
+                loadingTileRemaining: 0
             });
         }
+        this.setState({
+            loadingTileRemaining: 0
+        });
 
         // Reloading for single terrain mesh
         const shouldReload =
@@ -78,7 +83,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
             props.elevationDecoder !== oldProps.elevationDecoder ||
             props.elevations != oldProps.elevations ||
             props.bounds !== oldProps.bounds;
-        
+
         if (!this.state.isTiled && shouldReload) {
             const terrain = this.loadTerrain(props);
             this.setState({
@@ -119,12 +124,12 @@ export class ManagedTerrainLayer extends TerrainLayer {
 
     getCurrentElevation(elevations, tile) {
         for (let elevation of elevations) {
-            if (elevation.bbox == null || 
+            if (elevation.bbox == null ||
                 elevation.bbox.north > tile.bbox.north &&
                 elevation.bbox.east > tile.bbox.east &&
                 elevation.bbox.south < tile.bbox.south &&
                 elevation.bbox.west < tile.bbox.west
-                )
+            )
                 return elevation
         }
         return null;
@@ -144,6 +149,10 @@ export class ManagedTerrainLayer extends TerrainLayer {
         const {
             viewport
         } = this.context;
+        const {
+            loadingTileRemaining
+        } = this.state;
+        this.setState({ loadingTileRemaining: loadingTileRemaining + 1 });
         const elevation = this.getCurrentElevation(elevations, tile);
         const dataUrl = getURLFromTemplate(elevation.query, tile);
         const textureUrl = getURLFromTemplate(texture, tile);
@@ -193,45 +202,86 @@ export class ManagedTerrainLayer extends TerrainLayer {
             }).catch(_ => null) :
             Promise.resolve(null);
 
-        return Promise.all([terrain, surface, surfaceHeatmap, surfaceTraffic]);
+        return Promise.all([terrain, surface, surfaceHeatmap, surfaceTraffic]).then((result) => {
+            const {
+                loadingTileRemaining
+            } = this.state;
+            this.setState({ loadingTileRemaining: loadingTileRemaining - 1 });
+            return result;
+        });
     }
 
-    getElevationPoint(lngLat) {
+    async waitTileUntilFound(lngLat, resolve) {
+        if (resolve) {
+            let selectedTile = this.getTileFromLngLat(lngLat);
+            if (selectedTile && selectedTile.layers)
+                resolve(selectedTile);
+            else
+                setTimeout(() => this.waitTileUntilFound(lngLat, resolve), 100);
+        }
+        else 
+            return new Promise((resolve) => {
+                let selectedTile = this.getTileFromLngLat(lngLat);
+                if (selectedTile && selectedTile.layers)
+                    resolve(selectedTile);
+                else
+                    setTimeout(() => this.waitTileUntilFound(lngLat, resolve), 100);
+            });
+    }
+
+    getTileFromLngLat(lngLat) {
         const tileLayer = this.getSubLayers()[0];
-        if (!tileLayer)
-            return;
-        const tiles = tileLayer.state.tileset.tiles;
-        if (!tiles)
-            return;
-        const viewport = this.context.viewport;
-        const [x, y] = viewport.project(lngLat);
+        const { tileset, } = tileLayer.state;
         const [lng, lat] = lngLat;
-        let selectedTile;
-        for (let tile of tiles) {
+        for (let tile of tileset._tiles) {
             if (tile.bbox.north >= lat && tile.bbox.south <= lat
                 && tile.bbox.east >= lng && tile.bbox.west <= lng) {
-                    selectedTile = tile;
-                    break;
-                }
-        }
-        if (!selectedTile)
-            return;
-        const vertices = selectedTile.layers[0].props.mesh.attributes.POSITION.value;
-        let minDistance;
-        let nearestVertex;
-        for (let i = 0; i < vertices.lenght; i += 3) {
-            const deltaX = x - vertices[i];
-            const deltaY = y - vertices[i + 1];
-            const distance = Math.sqrt((deltaX ** 2) + (deltaY ** 2));
-            if (!minDistance) {
-                minDistance = distance;
-                nearestVertex = i;
-            } else if (minDistance > distance) {
-                minDistance = distance;
-                nearestVertex = i;
+                return tile;
             }
         }
-        return vertices[nearestVertex + 2];
+    }
+
+    async getAltitude(lngLat, signal) {
+        return new Promise(async (resolve, reject) => {
+            signal.addEventListener('abort', () => {
+                reject();
+            });
+            const tileLayer = this.getSubLayers()[0];
+            const { tileset, } = tileLayer.state;
+            const {
+                loadingTileRemaining
+            } = this.state;
+            const viewport = this.context.viewport;
+            const [lng, lat] = lngLat;
+            const selectedTile = await this.waitTileUntilFound(lngLat);
+            if (!selectedTile) {
+                console.log('tile not found', tile, tileset);
+                resolve(0);
+                return;
+            }
+            if (!selectedTile.layers) {
+                console.log('cant get layer', selectedTile);
+                resolve(0);
+                return;
+            }
+            const [x1, y1] = viewport.projectPosition(lngLat);
+            const vertices = selectedTile.layers[0].props.mesh.attributes.POSITION.value;
+            let minDistance;
+            let nearestVertex;
+            for (let i = 0; i < vertices.length; i += 3) {
+                const deltaX = x1 - vertices[i];
+                const deltaY = y1 - vertices[i + 1];
+                const distance = Math.sqrt((deltaX ** 2) + (deltaY ** 2));
+                if (!minDistance) {
+                    minDistance = distance;
+                    nearestVertex = i;
+                } else if (minDistance > distance) {
+                    minDistance = distance;
+                    nearestVertex = i;
+                }
+            }
+            resolve(vertices[nearestVertex + 2]);
+        });
     }
 
     renderSubLayers(props) {
@@ -315,7 +365,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
                         }
                     },
                     onViewportLoad: this.onViewportLoad.bind(this),
-                    // zRange: this.state.zRange || null,
+                    zRange: this.state.zRange || null,
                     tileSize,
                     maxZoom,
                     minZoom,
