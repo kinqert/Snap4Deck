@@ -376,6 +376,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
                     onTileError,
                     maxCacheSize,
                     maxCacheByteSize,
+                    TilesetClass: snap4deck.OrderedTileSet,
                     refinementStrategy
                 }
             );

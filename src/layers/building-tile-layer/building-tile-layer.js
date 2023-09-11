@@ -10,6 +10,8 @@ import { GLTFLoader } from '@loaders.gl/gltf';
 import GL from '@luma.gl/constants';
 import { OrderedTileSet } from '../managed-tile-layer/managed-tileset';
 import { PathLayer } from '@deck.gl/layers';
+import { Tile3DLayer } from '@deck.gl/geo-layers';
+import { Tileset2D } from '../tileset-2d/tileset-2d';
 
 const defaultProps = {
     ...FusionTileLayer.defaultProps,

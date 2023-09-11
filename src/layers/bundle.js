@@ -11,3 +11,4 @@ export {BuildingLayer} from './building-layer/building-layer';
 export {BuildingTileLayer} from './building-tile-layer/building-tile-layer';
 export {FusionIconLayer} from './fusion-icon-layer/fusion-icon-layer';
 export * from './fusion-tile-layer/fusion-tile-layer';
+export * from './managed-tile-layer/managed-tileset';

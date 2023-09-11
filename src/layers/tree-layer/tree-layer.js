@@ -11,9 +11,10 @@ import { GLBTileLayer, GLBTileSet } from '../glb-tile-layer/glb-tileset';
 import { ScenegraphLayer } from '@deck.gl/mesh-layers';
 // import { GLTFLoader } from '@loaders.gl/gltf';
 import { FusionTileLayer, geojsonFusionBottomUp, geojsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
+import { OrderedTileSet } from '../managed-tile-layer/managed-tileset';
 
 const defaultProps = {
-    ...GLBTileLayer.defaultProps,
+    ...FusionTileLayer.defaultProps,
     model: { type: 'string', value: null },
 }
 
@@ -116,6 +117,7 @@ export class TreeLayer extends CompositeLayer {
         const {
             tileSize,
             maxTiles,
+            minTileZoom,
             maxZoom,
             minZoom,
             extent,
@@ -128,6 +130,7 @@ export class TreeLayer extends CompositeLayer {
             refinementStrategy
         } = this.props;
         const { jsonTiles } = this.state;
+        console.log(this.props);
 
         return new FusionTileLayer(
             // this.getSubLayerProps({
@@ -153,10 +156,11 @@ export class TreeLayer extends CompositeLayer {
                     return [geojsonFusionBottomUp(child[0], current[0]), child[1]];
                 },
                 tileSize,
-                // maxTiles,
+                TilesetClass: OrderedTileSet,
                 maxZoom,
-                // minZoom: 14,
-                minTileZoom: 14,
+                minZoom,
+                maxTiles,
+                minTileZoom,
                 extent,
                 maxRequests,
                 onTileLoad,

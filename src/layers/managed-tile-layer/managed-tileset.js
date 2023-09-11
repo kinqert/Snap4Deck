@@ -186,10 +186,11 @@ function getOSMTileIndices(viewport, maxZ, zRange, bounds, maxTiles, maxOffsetZo
 			}
 		}
 	}
+
 	const height = viewport.height;
 	const width = viewport.width;
-	const lat_rif = viewport.unproject([width / 2, height])[1];
-	const lng_rif = viewport.unproject([width / 2, height])[0];
+	const lat_rif = viewport.unproject([width / 2, height / 2])[1];
+	const lng_rif = viewport.unproject([width / 2, height / 2])[0];
 
 	let result = Array.from(root.getSelected()).sort((a, b) => {
 		const lat_a = tile2lat(a.y, a.z);
@@ -275,7 +276,9 @@ export class OrderedTileSet extends _Tileset2D {
 		}
 		if (this._dirty) {
 			// sort by zoom level so that smaller tiles are displayed on top
-			this._tiles = Array.from(this._cache.values()).sort((t1, t2) => t1.zoom - t2.zoom);
+			this._tiles = Array.from(this._cache.values()).sort((t1, t2) => { 
+                t1.zoom - t2.zoom;
+            });
 
 			this._dirty = false;
 		}
