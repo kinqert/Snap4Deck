@@ -1,12 +1,13 @@
 import { TileLayer } from "@deck.gl/geo-layers";
 import { _GlobeViewport, _flatten as flatten } from "@deck.gl/core";
 
-import { OrderedTileSet } from "../managed-tile-layer/managed-tileset";
-import { getURLFromTemplate, getURLFromTemplates } from "../../utils/url-template";
+import { getURLFromTemplates } from "../../utils/url-template";
 import { getSubTiles, lat2tile, lon2tile, tile2BB, tile2Bbox, getParentTile } from "../../utils/tile-utils";
+import { Tileset2D, Tileset2DCentered } from "../tileset-2d/tileset-2d";
 
 const defaultProps = {
     ...TileLayer.defaultProps,
+    TilesetClass: Tileset2DCentered,
     fusionBottomUP: { type: 'function', value: geojsonFusionBottomUp, compare: false },
     fusionTopDown: { type: 'function', value: geojsonFusionTopDown, compare: false },
     fusionPeer: { type: 'function', value: null, compare: false },

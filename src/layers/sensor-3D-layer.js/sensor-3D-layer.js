@@ -52,6 +52,8 @@ export class Sensor3DLayer extends CompositeLayer {
                 opacity: 1,
                 stroked: true,
                 filled: true,
+                extensions: this.props.extensions, 
+                terrainDrawMode: 'drape',
 
                 lineWidthMinPixels: 1,
                 getPosition: d => d.geometry.coordinates,
@@ -62,6 +64,8 @@ export class Sensor3DLayer extends CompositeLayer {
             new ColumnLayer({
                 id: `${this.props.id}-column-layer`,
                 data: this.props.data,
+                extensions: this.props.extensions, 
+                terrainDrawMode: 'offset',
                 diskResolution: 12,
                 radius: 5,
                 extruded: true,
@@ -80,6 +84,8 @@ export class Sensor3DLayer extends CompositeLayer {
                 id: `${this.props.id}-text-layer`,
                 data: this.props.data,
                 getPosition: d => [...d.geometry.coordinates, this.props.getElevation(d) + 7],
+                extensions: this.props.extensions, 
+                terrainDrawMode: 'offset',
                 updateTriggers: {
                     getPosition: this.props.updateTriggers.getPosition,
                     getText: this.props.updateTriggers.getText,

@@ -1,17 +1,12 @@
 import { CompositeLayer } from '@deck.gl/core';
-import { TileLayer } from '@deck.gl/geo-layers';
 import { GLTFLoader } from '@loaders.gl/gltf';
 import { load } from '@loaders.gl/core';
 import { fetchFile } from '@loaders.gl/core';
 
 import { lon2tile, lat2tile } from '../../utils/tile-utils';
-import { CachedGLBLayer, waitForGLTFAssets } from '../cached-glb-layer/cached-glb-layer';
-import { urlTemplateToUpdateTrigger } from '../../utils/url-template';
-import { GLBTileLayer, GLBTileSet } from '../glb-tile-layer/glb-tileset';
-import { ScenegraphLayer } from '@deck.gl/mesh-layers';
-// import { GLTFLoader } from '@loaders.gl/gltf';
+import { CachedGLBLayer } from '../cached-glb-layer/cached-glb-layer';
 import { FusionTileLayer, geojsonFusionBottomUp, geojsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
-import { OrderedTileSet } from '../managed-tile-layer/managed-tileset';
+import { Tileset2D } from '../bundle';
 
 const defaultProps = {
     ...FusionTileLayer.defaultProps,
@@ -60,15 +55,10 @@ export class TreeLayer extends CompositeLayer {
             const gltfPromise = fetchFile(props.model)
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => {
-                    // Instantiate the GLTF model
                     return arrayBuffer
-                    // const gltf = load(arrayBuffer, GLTFLoader);
-                    // return gltf;
                 });
 
             this.setState({ GLTFPromise: gltfPromise });
-            // this.setState({ GLTFPromise: load(props.model, { gltf: {} }) });
-            // this.setState({GLTFPromise: load(props.model, {gltf: {}})});
         }
     }
 
@@ -156,7 +146,7 @@ export class TreeLayer extends CompositeLayer {
                     return [geojsonFusionBottomUp(child[0], current[0]), child[1]];
                 },
                 tileSize,
-                TilesetClass: OrderedTileSet,
+                TilesetClass: Tileset2D,
                 maxZoom,
                 minZoom,
                 maxTiles,

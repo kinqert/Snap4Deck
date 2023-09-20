@@ -19,114 +19,8 @@ import { waitForGLTFAssets } from '../cached-glb-layer/cached-glb-layer';
 import vs from './building-layer-vs';
 import fs from './building-layer-fs';
 
-// const RADIAN_PER_DEGREE = Math.PI / 180;
-// const modelMatrix = new Float32Array(16);
-// const valueArray = new Float32Array(12);
-// export const MATRIX_ATTRIBUTES = {
-//   size: 12,
-//   accessor: ['getOrientation', 'getScale', 'getTranslation', 'getTransformMatrix'],
-//   shaderAttributes: {
-//     instanceModelMatrix__LOCATION_0: {
-//       size: 3,
-//       elementOffset: 0
-//     },
-//     instanceModelMatrix__LOCATION_1: {
-//       size: 3,
-//       elementOffset: 3
-//     },
-//     instanceModelMatrix__LOCATION_2: {
-//       size: 3,
-//       elementOffset: 6
-//     },
-//     instanceTranslation: {
-//       size: 3,
-//       elementOffset: 9
-//     }
-//   },
-
-//   update(attribute, {startRow, endRow}) {
-//     // @ts-expect-error: "this" will be bound to a layer when this function is called
-//     const {data, getOrientation, getScale, getTranslation, getTransformMatrix} = this.props;
-
-//     const arrayMatrix = Array.isArray(getTransformMatrix);
-//     const constantMatrix = arrayMatrix && getTransformMatrix.length === 16;
-//     const constantScale = Array.isArray(getScale);
-//     const constantOrientation = Array.isArray(getOrientation);
-//     const constantTranslation = Array.isArray(getTranslation);
-
-//     const hasMatrix = constantMatrix || (!arrayMatrix && Boolean(getTransformMatrix(data[0])));
-
-//     if (hasMatrix) {
-//       attribute.constant = constantMatrix;
-//     } else {
-//       attribute.constant = constantOrientation && constantScale && constantTranslation;
-//     }
-
-//     const instanceModelMatrixData = attribute.value;
-
-//     if (attribute.constant) {
-//       let matrix;
-
-//       if (hasMatrix) {
-//         modelMatrix.set(getTransformMatrix);
-//         matrix = getExtendedMat3FromMat4(modelMatrix);
-//       } else {
-//         matrix = valueArray;
-
-//         const orientation = getOrientation;
-//         const scale = getScale;
-
-//         calculateTransformMatrix(matrix, orientation, scale);
-//         matrix.set(getTranslation, 9);
-//       }
-
-//       attribute.value = new Float32Array(matrix);
-//     } else {
-//       let i = startRow * attribute.size;
-//       const {iterable, objectInfo} = createIterable(data, startRow, endRow);
-//       for (const object of iterable) {
-//         objectInfo.index++;
-//         let matrix;
-
-//         if (hasMatrix) {
-//           modelMatrix.set(
-//             constantMatrix ? getTransformMatrix : getTransformMatrix(object, objectInfo)
-//           );
-//           matrix = getExtendedMat3FromMat4(modelMatrix);
-//         } else {
-//           matrix = valueArray;
-
-//           const orientation = constantOrientation
-//             ? getOrientation
-//             : getOrientation(object, objectInfo);
-//           const scale = constantScale ? getScale : getScale(object, objectInfo);
-
-//           calculateTransformMatrix(matrix, orientation, scale);
-//           matrix.set(constantTranslation ? getTranslation : getTranslation(object, objectInfo), 9);
-//         }
-
-//         instanceModelMatrixData[i++] = matrix[0];
-//         instanceModelMatrixData[i++] = matrix[1];
-//         instanceModelMatrixData[i++] = matrix[2];
-//         instanceModelMatrixData[i++] = matrix[3];
-//         instanceModelMatrixData[i++] = matrix[4];
-//         instanceModelMatrixData[i++] = matrix[5];
-//         instanceModelMatrixData[i++] = matrix[6];
-//         instanceModelMatrixData[i++] = matrix[7];
-//         instanceModelMatrixData[i++] = matrix[8];
-//         instanceModelMatrixData[i++] = matrix[9];
-//         instanceModelMatrixData[i++] = matrix[10];
-//         instanceModelMatrixData[i++] = matrix[11];
-//       }
-//     }
-//   }
-// };
-
-
-
 const defaultProps = {
     ...ScenegraphLayer.defaultProps,
-    // glb: {type: 'object', value: null}
     glb: { type: 'array', value: null, async: true }
 }
 
@@ -208,6 +102,11 @@ export class BuildingLayer extends ScenegraphLayer {
                 mat.pbrMetallicRoughness.metallicFactor = 0.5;
                 mat.pbrMetallicRoughness.roughnessFactor = 1;
             }
+            // if (window.Worker) {
+            //     const worker = new Worker('../widgets/layers/workers/building-worker.js');
+            //     console.log(worker);
+            //     worker.postMessage('ciao');
+            // }
             const gltfObjects = createGLTFObjects(gl, gltf, this._getModelOptions());
             scenegraphData = { gltf, ...gltfObjects };
 

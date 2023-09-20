@@ -8,24 +8,26 @@
 	"author": "Lorenzo Adreani",
 	"license": "GPL",
 	"devDependencies": {
-		"webpack": "^5.74.0",
+		"webpack": "^5.88.2",
 		"webpack-cli": "^4.10.0"
 	},
 	"dependencies": {
-		"@deck.gl/core": "^8.8.17",
-		"@deck.gl/extensions": "^8.8.17",
-		"@deck.gl/geo-layers": "^8.8.17",
-		"@deck.gl/layers": "^8.8.17",
-		"@deck.gl/mesh-layers": "^8.8.17",
+		"@deck.gl/core": "^8.9.28",
+		"@deck.gl/extensions": "^8.9.28",
+		"@deck.gl/geo-layers": "^8.9.28",
+		"@deck.gl/layers": "^8.9.28",
+		"@deck.gl/mesh-layers": "^8.9.28",
 		"@loaders.gl/gltf": "^3.3.1",
-		"@loaders.gl/obj": "^3.2.13",
-		"@loaders.gl/terrain": "^3.2.13",
-		"@luma.gl/core": "^8.5.16",
+		"@loaders.gl/obj": "^3.4.14",
+		"@loaders.gl/terrain": "^3.4.14",
+		"@luma.gl/core": "^8.5.21",
 		"@luma.gl/engine": "^8.5.18",
-		"@luma.gl/experimental": "^8.5.17",
+		"@luma.gl/experimental": "^8.5.21",
 		"@math.gl/core": "^3.6.3",
 		"@math.gl/culling": "^3.6.3",
-		"@math.gl/web-mercator": "^3.6.3"
+		"@math.gl/web-mercator": "^3.6.3",
+		"fs-extra": "^11.1.1",
+		"underscore": "^1.13.6"
 	},
 	"exports": {
 		"./layers": "./layers/bundle.js"

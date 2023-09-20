@@ -142,11 +142,7 @@ export class CrestLayer extends Layer {
 	}
 
 	getShaders() {
-		return Object.assign({}, super.getShaders(), {
-			vs,
-			fs,
-			modules: [project32, picking],
-		});
+        return super.getShaders({vs, fs, modules: [project32, picking]});
 	}
 
 	static POSITIONS = [

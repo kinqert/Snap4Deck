@@ -2,15 +2,12 @@ import { CompositeLayer } from '@deck.gl/core';
 
 import { getSubTiles, tile2lng, tile2lat } from '../../utils/tile-utils';
 import { BuildingLayer } from '../building-layer/building-layer';
-import { FusionTileLayer, geojsonFusionBottomUp, geojsonFusionTopDown, jsonFusionBottomUp, jsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
+import { FusionTileLayer, jsonFusionBottomUp, jsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
 import { getURLFromTemplate } from '../../utils/url-template';
 import { fetchFile } from '@loaders.gl/core';
 import { load } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 import GL from '@luma.gl/constants';
-import { OrderedTileSet } from '../managed-tile-layer/managed-tileset';
-import { PathLayer } from '@deck.gl/layers';
-import { Tile3DLayer } from '@deck.gl/geo-layers';
 import { Tileset2D } from '../tileset-2d/tileset-2d';
 
 const defaultProps = {
@@ -87,7 +84,6 @@ export class BuildingTileLayer extends CompositeLayer {
                             return load(arrayBuffer, GLTFLoader).then(scenegraph => {
                                 buildings[0].scenegraph = scenegraph;
                                 return buildings;
-                                // buildings[0].scenegraph = this._updateScenegraph(scenegraph, d.index);
                             });
                         });
                 });
@@ -106,7 +102,6 @@ export class BuildingTileLayer extends CompositeLayer {
             return;
         let json = [];
         json = json.concat(...data);
-
 
         return new SubLayerClass(props, {
             data: json,
@@ -163,7 +158,8 @@ export class BuildingTileLayer extends CompositeLayer {
                     json = json.concat(...parent);
                     return jsonFusionBottomUp(json, current, getFusionCoords);
                 },
-                TilesetClass: OrderedTileSet,
+                // TilesetClass: OrderedTileSet,
+                TilesetClass: Tileset2D,
                 tileSize,
                 extent,
                 maxRequests,

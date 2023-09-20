@@ -5,6 +5,9 @@ import { Tile2DHeader } from "./tile-2d-header"
 
 import { getTileIndices, tileToBoundingBox, getCullBounds } from "./utils"
 import { memoize } from "./memoize"
+import { _Tileset2D } from "@deck.gl/geo-layers"
+import _ from "underscore";
+import { tile2lng, tile2lat, getMeterDistance } from "../../utils/tile-utils";
 
 // bit masks
 const TILE_STATE_VISITED = 1
@@ -64,6 +67,54 @@ export const DEFAULT_TILESET2D_PROPS = {
  * Manages loading and purging of tile data. This class caches recently visited tiles
  * and only creates new tiles if they are present.
  */
+export class Tileset2DCentered extends _Tileset2D {
+  getTileIndices(props) {
+    const indices = super.getTileIndices(props);
+
+    if(indices.length === 0) return indices;
+    const {viewport} = props;
+	const height = viewport.height;
+	const width = viewport.width;
+	const lat_rif = viewport.unproject([width / 2, height / 2])[1];
+	const lng_rif = viewport.unproject([width / 2, height / 2])[0];
+    return _.sortBy(indices, ({ x, y, z }) => {
+		const lat_a = tile2lat(y, z);
+		const lng_a = tile2lng(x, z);
+		return getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
+    });
+
+    let minY = +Infinity,
+      maxY = -Infinity,
+      minX = +Infinity,
+      maxX = -Infinity;
+
+    for (const { x, y } of indices) {
+      if (x < minX) {
+        minX = x;
+      }
+      if (x > maxX) {
+        maxX = x;
+      }
+      if (y < minY) {
+        minY = y;
+      }
+      if (y > maxY) {
+        maxY = y;
+      }
+    }
+
+    const midX = minX + ((maxX - minX) / 2);
+    const midY = minY + ((maxY - minY) / 2);
+    // const midX = (minX + maxX) * 0.5 + 1000.5;
+    // const midY = (minY + maxY) * 0.5 + 10;
+
+    return _.sortBy(indices, ({ x, y }) =>
+      Math.sqrt(Math.pow(x - midX, 2) + Math.pow(y - midY, 2)),
+    //   Math.sqrt(Math.pow(x - 0.5 - midX, 2) + Math.pow(y - 0.5 - midY, 2)),
+    );
+  }
+}
+
 export class Tileset2D {
     /**
      * Takes in a function that returns tile data, a cache size, and a max and a min zoom level.
@@ -260,8 +311,10 @@ export class Tileset2D {
         modelMatrix,
         modelMatrixInverse
     }) {
-        const { tileSize, extent, zoomOffset } = this.opts
-        return getTileIndices({
+        const { tileSize, extent, zoomOffset, maxTiles, minTileZoom } = this.opts
+        if (minTileZoom > viewport.zoom)
+            return [];
+        const indices = getTileIndices({
             viewport,
             maxZoom,
             minZoom,
@@ -271,7 +324,11 @@ export class Tileset2D {
             modelMatrix,
             modelMatrixInverse,
             zoomOffset
-        })
+        });
+        if (maxTiles) {
+            return indices.slice(0, maxTiles);
+        }
+        return indices;
     }
 
     /** Returns unique string key for a tile index */
@@ -433,9 +490,9 @@ export class Tileset2D {
         }
         if (this._dirty) {
             // sort by zoom level so that smaller tiles are displayed on top
-              this._tiles = Array.from(this._cache.values()).sort(
+            this._tiles = Array.from(this._cache.values()).sort(
                 (t1, t2) => t1.zoom - t2.zoom
-              )
+            )
 
             this._dirty = false
         }

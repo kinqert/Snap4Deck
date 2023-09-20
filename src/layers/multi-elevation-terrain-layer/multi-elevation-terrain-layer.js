@@ -1,4 +1,3 @@
-import { COORDINATE_SYSTEM } from "@deck.gl/core";
 import { TerrainLayer } from "@deck.gl/geo-layers";
 import { TileLayer } from "@deck.gl/geo-layers";
 import { SimpleMeshLayer } from "@deck.gl/mesh-layers";
@@ -6,13 +5,10 @@ import { OBJLoader } from "@loaders.gl/obj";
 import { TerrainWorkerLoader } from "@loaders.gl/terrain";
 
 import { getURLFromTemplate, urlTemplateToUpdateTrigger } from "../../utils/url-template";
-import { ManagedTerrainTileLayer } from "./managed-terrain-tileset";
-import { TerrainMeshLayer } from "../terrain-mesh-layer/terrain-mesh-layer";
-import { WebMercatorViewport } from "@math.gl/web-mercator";
-import { FusionTileLayer } from "../fusion-tile-layer/fusion-tile-layer";
+import { Tileset2D, Tileset2DCentered } from "../tileset-2d/tileset-2d";
 
 const defaultProps = {
-    ...TileLayer.defaultProps,
+    ...TerrainLayer.defaultProps,
     // Martini error tolerance in meters, smaller number -> more detailed mesh
     meshMaxError: { type: 'number', value: 4.0 },
     // Bounding box of the terrain image, [minX, minY, maxX, maxY] in world coordinates
@@ -34,9 +30,6 @@ const defaultProps = {
     // Same as SimpleMeshLayer wireframe
     wireframe: false,
     material: true,
-    heatmapOpacity: { type: 'number', min: 0, max: 1, value: 0.25 },
-    trafficOpacity: { type: 'number', min: 0, max: 1, value: 1 },
-
     loaders: [TerrainWorkerLoader]
 };
 
@@ -49,7 +42,7 @@ export class ProxyTerrain {
     }
 }
 
-export class ManagedTerrainLayer extends TerrainLayer {
+export class MultiElevationTerrainLayer extends TerrainLayer {
     static defaultProps = defaultProps;
     updateState({
         props,
@@ -107,7 +100,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
         if (!elevationData) {
             return null;
         }
-        let loadOptions = this.getLoadOptions();
+        let loadOptions = this.getLoadOptions() || {};
         loadOptions = {
             ...loadOptions,
             terrain: {
@@ -137,14 +130,9 @@ export class ManagedTerrainLayer extends TerrainLayer {
 
     getTiledTerrainData(tile) {
         const {
-            elevationData,
             elevations,
             fetch,
             texture,
-            elevationDecoder,
-            meshMaxError,
-            heatmap,
-            traffic
         } = this.props;
         const {
             viewport
@@ -156,8 +144,6 @@ export class ManagedTerrainLayer extends TerrainLayer {
         const elevation = this.getCurrentElevation(elevations, tile);
         const dataUrl = getURLFromTemplate(elevation.query, tile);
         const textureUrl = getURLFromTemplate(texture, tile);
-        const heatmapUrl = getURLFromTemplate(heatmap, tile);
-        const trafficUrl = getURLFromTemplate(traffic, tile);
 
         const {
             bbox,
@@ -173,8 +159,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
             elevationData: dataUrl,
             bounds,
             elevationDecoder: elevation.elevationDecoder,
-            // meshMaxError: 9,
-            meshMaxError: 3,
+            meshMaxError: 4,
             signal
         });
         const surface = textureUrl ?
@@ -185,30 +170,8 @@ export class ManagedTerrainLayer extends TerrainLayer {
                 signal
             }).catch(_ => null) :
             Promise.resolve(null);
-        const surfaceHeatmap = heatmapUrl ?
-            fetch(heatmapUrl, {
-                propName: 'heatmap',
-                layer: this,
-                loaders: [],
-                signal
-            }).catch(_ => null) :
-            Promise.resolve(null);
-        const surfaceTraffic = trafficUrl ?
-            fetch(trafficUrl, {
-                propName: 'traffic',
-                layer: this,
-                loaders: [],
-                signal
-            }).catch(_ => null) :
-            Promise.resolve(null);
 
-        return Promise.all([terrain, surface, surfaceHeatmap, surfaceTraffic]).then((result) => {
-            const {
-                loadingTileRemaining
-            } = this.state;
-            this.setState({ loadingTileRemaining: loadingTileRemaining - 1 });
-            return result;
-        });
+        return Promise.all([terrain, surface]);
     }
 
     async waitTileUntilFound(lngLat, resolve) {
@@ -284,35 +247,35 @@ export class ManagedTerrainLayer extends TerrainLayer {
         });
     }
 
-    renderSubLayers(props) {
-        // const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
-        const SubLayerClass = this.getSubLayerClass('mesh', TerrainMeshLayer);
+    // renderSubLayers(props) {
+    //     // const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
+    //     const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
 
-        const { color, wireframe, material, heatmapOpacity, trafficOpacity } = this.props;
-        const { data } = props;
+    //     const { color, wireframe, material, heatmapOpacity, trafficOpacity } = this.props;
+    //     const { data } = props;
 
-        if (!data) {
-            return null;
-        }
+    //     if (!data) {
+    //         return null;
+    //     }
 
-        const [mesh, texture, heatmap, traffic] = data;
+    //     const [mesh, texture] = data;
 
-        return new SubLayerClass(props, {
-            data: DUMMY_DATA,
-            mesh,
-            texture,
-            heatmap,
-            traffic,
-            heatmapOpacity,
-            trafficOpacity,
-            _instanced: false,
-            coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-            getPosition: d => [0, 0, 0],
-            getColor: color,
-            wireframe,
-            material,
-        });
-    }
+    //     return new SubLayerClass(props, {
+    //         data: DUMMY_DATA,
+    //         mesh,
+    //         texture,
+    //         heatmap,
+    //         traffic,
+    //         heatmapOpacity,
+    //         trafficOpacity,
+    //         _instanced: false,
+    //         coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+    //         getPosition: d => [0, 0, 0],
+    //         getColor: color,
+    //         wireframe,
+    //         material,
+    //     });
+    // }
 
     renderLayers() {
         const {
@@ -321,10 +284,6 @@ export class ManagedTerrainLayer extends TerrainLayer {
             elevationData,
             elevations,
             texture,
-            heatmap,
-            traffic,
-            heatmapOpacity,
-            trafficOpacity,
             wireframe,
             meshMaxError,
             elevationDecoder,
@@ -354,15 +313,9 @@ export class ManagedTerrainLayer extends TerrainLayer {
                             elevationData: urlTemplateToUpdateTrigger(elevationData),
                             elevations: elevations,
                             texture: urlTemplateToUpdateTrigger(texture),
-                            heatmap: urlTemplateToUpdateTrigger(heatmap),
-                            traffic: urlTemplateToUpdateTrigger(traffic),
                             meshMaxError,
                             elevationDecoder,
                         },
-                        renderSubLayers: {
-                            heatmapOpacity,
-                            trafficOpacity
-                        }
                     },
                     onViewportLoad: this.onViewportLoad.bind(this),
                     zRange: this.state.zRange || null,
@@ -376,7 +329,7 @@ export class ManagedTerrainLayer extends TerrainLayer {
                     onTileError,
                     maxCacheSize,
                     maxCacheByteSize,
-                    TilesetClass: snap4deck.OrderedTileSet,
+                    TilesetClass: Tileset2DCentered,
                     refinementStrategy
                 }
             );
