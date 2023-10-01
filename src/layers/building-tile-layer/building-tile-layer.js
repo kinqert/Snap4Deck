@@ -8,7 +8,8 @@ import { fetchFile } from '@loaders.gl/core';
 import { load } from '@loaders.gl/core';
 import { GLTFLoader } from '@loaders.gl/gltf';
 import GL from '@luma.gl/constants';
-import { Tileset2D } from '../tileset-2d/tileset-2d';
+import { Tileset2D, Tileset2DCentered } from '../tileset-2d/tileset-2d';
+import { TileLayer } from '@deck.gl/geo-layers';
 
 const defaultProps = {
     ...FusionTileLayer.defaultProps,
@@ -24,7 +25,9 @@ export class BuildingTileLayer extends CompositeLayer {
         let tilePromised = [];
         let tiles = [];
         const { x, y, z } = tile.index;
-        const subIndices = getSubTiles(x, y, z, 18);
+        if (z > 16)
+            console.log('z: ', z)
+        const subIndices = getSubTiles(x, y, z, 16);
         const { signal } = tile;
         let buildingUrl = data.split('/').slice(0, -1).join('/');
         for (let subIndex of subIndices) {
@@ -50,14 +53,14 @@ export class BuildingTileLayer extends CompositeLayer {
                 index: {
                     x: s_x,
                     y: s_y,
-                    z: 18
+                    z: 16
                 }
             }
             const modelUrl = getURLFromTemplate(buildingUrl, tile);
             tiles.push(
                 {
                     glb: `${modelUrl}/tile.glb`,
-                    coord: [tile2lng(s_x, 18), tile2lat(s_y, 18)]
+                    coord: [tile2lng(s_x, 16), tile2lat(s_y, 16)]
                 }
             );
             let promise = fetch(getURLFromTemplate(data, tile),
@@ -78,7 +81,11 @@ export class BuildingTileLayer extends CompositeLayer {
                     return buildings;
                 }).then((buildings) => {
                     const domains = ['https://www.snap4city.org', 'https://www.snap4solutions.org', 'https://www.snap4industry.org'];
-                    return fetchFile(buildings[0].glb.replace('https://www.snap4city.org', domains[Math.floor(Math.random() * 10 % 3)]), { signal })
+                    let url = buildings[0].glb;
+                    if (url.includes('https://www.snap4city.org')) {
+                        url = url.replace('https://www.snap4city.org', domains[Math.floor(Math.random() * 10 % 3)]);
+                    }
+                    return fetchFile(url, { signal })
                         .then(response => response.arrayBuffer())
                         .then(arrayBuffer => {
                             return load(arrayBuffer, GLTFLoader).then(scenegraph => {
@@ -153,17 +160,17 @@ export class BuildingTileLayer extends CompositeLayer {
                     json = json.concat(...parent);
                     return jsonFusionTopDown(json, current, index, getFusionCoords);
                 },
-                fusionBottomUP: (parent, current, getFusionCoords) => {
+                fusionBottomUP: (child, current, getFusionCoords) => {
                     let json = [];
-                    json = json.concat(...parent);
+                    json = json.concat(...child);
                     return jsonFusionBottomUp(json, current, getFusionCoords);
                 },
-                // TilesetClass: OrderedTileSet,
-                TilesetClass: Tileset2D,
+                TilesetClass: Tileset2DCentered,
                 tileSize,
                 extent,
                 maxRequests,
                 maxOffsetZoom,
+                maxTileZoom: 16,
                 minTileZoom,
                 maxTiles,
                 maxZoom,

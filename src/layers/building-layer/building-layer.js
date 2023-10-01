@@ -87,6 +87,9 @@ export class BuildingLayer extends ScenegraphLayer {
     }
 
     _updateScenegraph(scenegraph, index) {
+        // debug
+        const start = Date.now();
+        // fine debug
         const props = this.props;
         const { gl } = this.context;
         let scenegraphData = null;
@@ -119,6 +122,10 @@ export class BuildingLayer extends ScenegraphLayer {
         const options = { layer: this, gl };
         const scenegraphElab = props.getScene(scenegraphData, options);
 
+        // debug
+        const end = Date.now();
+        // console.log('time update scenegraph', (end - start) / 1000);
+        // fine debug
         if (scenegraphElab instanceof ScenegraphNode) {
             this._deleteScenegraph();
             this._applyAllAttributes(scenegraphElab, index);
@@ -129,6 +136,9 @@ export class BuildingLayer extends ScenegraphLayer {
     }
 
     _applyAllAttributes(scenegraph, index) {
+        // debug
+        const start = Date.now();
+        // fine debug
         const uPositions = [];
         const uPositions64Low = [];
         var lastIndexBuilding = 0;
@@ -164,6 +174,10 @@ export class BuildingLayer extends ScenegraphLayer {
             i++;
         }
 
+        // debug
+        const end = Date.now();
+        // console.log('time update attributes', (end - start) / 1000);
+        // fine debug
     }
 
     _deleteScenegraph() {

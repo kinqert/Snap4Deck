@@ -59,6 +59,8 @@ export function getParentTile(tile_x, tile_y, z, z1) {
 
 export function getSubTiles(tile_x, tile_y, z, z1) {
 	var subTiles = [];
+    if (z > z1)
+        return [tile_x, tile_y]
 	for (var sub_x = tile_x * Math.pow(2, (z1 - z)); sub_x < (tile_x + 1) * Math.pow(2, (z1 - z)); sub_x++) {
 		for (var sub_y = tile_y * Math.pow(2, (z1 - z)); sub_y < (tile_y + 1) * Math.pow(2, (z1 - z)); sub_y++) {
 			subTiles.push([sub_x, sub_y]);

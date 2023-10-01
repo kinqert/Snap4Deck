@@ -12,11 +12,11 @@
 		"webpack-cli": "^4.10.0"
 	},
 	"dependencies": {
-		"@deck.gl/core": "^8.9.28",
-		"@deck.gl/extensions": "^8.9.28",
-		"@deck.gl/geo-layers": "^8.9.28",
-		"@deck.gl/layers": "^8.9.28",
-		"@deck.gl/mesh-layers": "^8.9.28",
+		"@deck.gl/core": "^8.9.30",
+		"@deck.gl/extensions": "^8.9.30",
+		"@deck.gl/geo-layers": "^8.9.30",
+		"@deck.gl/layers": "^8.9.30",
+		"@deck.gl/mesh-layers": "^8.9.30",
 		"@loaders.gl/gltf": "^3.3.1",
 		"@loaders.gl/obj": "^3.4.14",
 		"@loaders.gl/terrain": "^3.4.14",

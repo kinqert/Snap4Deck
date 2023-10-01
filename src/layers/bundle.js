@@ -9,3 +9,4 @@ export {ManagedTileLayer} from './managed-tile-layer/managed-tile-layer';
 export {Tileset2D} from './tileset-2d/tileset-2d';
 export {MultiElevationTerrainLayer} from './multi-elevation-terrain-layer/multi-elevation-terrain-layer';
 export * from './fusion-tile-layer/fusion-tile-layer';
+export * from './glb-tile-layer/glb-tileset';

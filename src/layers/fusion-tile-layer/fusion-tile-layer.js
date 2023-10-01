@@ -17,7 +17,8 @@ const defaultProps = {
     getFusionCoords: { type: 'function', value: null, compare: false },
     maxTiles: {type: 'number', value: null, compare: false},
     minTileZoom: {type: 'number', value: null, compare: false},
-    maxOffsetZoom: {type: 'number', value: null, compare: false},
+    maxTileZoom: {type: 'number', value: null, compare: false},
+    maxOffsetZoom: {type: 'number', value: 0, compare: false},
 }
 
 export function geojsonFusionTopDown(parent, current, index) {
@@ -101,6 +102,7 @@ export class FusionTileLayer extends TileLayer {
             zoomOffset,
             maxTiles,
             minTileZoom,
+            maxTileZoom,
             maxOffsetZoom
         } = this.props;
 
@@ -115,6 +117,7 @@ export class FusionTileLayer extends TileLayer {
             maxRequests,
             zoomOffset,
             maxTiles,
+            maxTileZoom,
             minTileZoom,
             maxOffsetZoom,
 
@@ -195,6 +198,8 @@ export class FusionTileLayer extends TileLayer {
         )
             return null;
 
+        if (z < 13)
+            console.log('what???', z)
         let result, cached;
         [result, cached] = this._fusionProcessChild(fusionedTile, childProp1, signal);
         !cached ? promised.push(...result) : fusionedTile = result;
@@ -233,12 +238,19 @@ export class FusionTileLayer extends TileLayer {
     }
 
     getTileData(tile) {
-        const { data, getTileData, fetch, fusionBottomUP, fusionTopDown, statePasstrough, deepLoad, getFusionCoords, offsetLoad } = this.props;
+        const { data, getTileData, fetch, fusionBottomUP, fusionTopDown, maxOffsetZoom, statePasstrough, deepLoad, getFusionCoords, offsetLoad } = this.props;
         const { tileset, commonState, lastViewZoom } = this.state;
         const { signal } = tile;
         const { viewport } = this.context;
         const { x, y, z } = tile.index;
 
+        const offsetZoom = Math.abs(Math.floor(z) - Math.floor(viewport.zoom));
+        if (z < 13) {
+            console.log('what???', z)
+            console.log('lol', offsetZoom);
+        }
+        // if (offsetZoom > maxOffsetZoom)
+        //     return [];
         let jumpZoom = 1;
         if (!lastViewZoom)
             this.setState({ lastViewZoom: viewport.zoom });
@@ -266,7 +278,7 @@ export class FusionTileLayer extends TileLayer {
         // TOP -> DOWN
         let [parent_x, parent_y] = getParentTile(x, y, z, z - jumpZoom);
         let parentTile = tileset._cache.get(`${parent_x}-${parent_y}-${z - jumpZoom}`);
-        if (parentTile && parentTile.content) {
+        if (parentTile && parentTile.content && (Array.isArray(parentTile.content) && parentTile.content.length > 0)) {
             return fusionTopDown(parentTile.content, {}, { x, y, z }, getFusionCoords);
         }
 

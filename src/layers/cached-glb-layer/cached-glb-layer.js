@@ -2,19 +2,22 @@ import { ScenegraphLayer } from "@deck.gl/mesh-layers";
 import { ScenegraphNode, createGLTFObjects} from "@luma.gl/experimental";
 
 export async function waitForGLTFAssets(gltfObjects) {
-  const remaining = [];
+    return new Promise(async (resolve, reject) => {
+        const remaining = [];
 
-  gltfObjects.scenes.forEach(scene => {
-    scene.traverse((model) => {
-      Object.values(model.model.getUniforms()).forEach((uniform) => {
-        if (uniform.loaded === false) {
-          remaining.push(uniform);
-        }
-      });
+        gltfObjects.scenes.forEach(scene => {
+            scene.traverse((model) => {
+            Object.values(model.model.getUniforms()).forEach((uniform) => {
+                if (uniform.loaded === false) {
+                remaining.push(uniform);
+                }
+            });
+            });
+        });
+
+        await waitWhileCondition(() => remaining.some(uniform => !uniform.loaded));
+        resolve();
     });
-  });
-
-  return await waitWhileCondition(() => remaining.some(uniform => !uniform.loaded));
 }
 
 async function waitWhileCondition(condition) {

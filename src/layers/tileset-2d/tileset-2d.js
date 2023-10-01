@@ -69,49 +69,62 @@ export const DEFAULT_TILESET2D_PROPS = {
  */
 export class Tileset2DCentered extends _Tileset2D {
   getTileIndices(props) {
-    const indices = super.getTileIndices(props);
+    const { maxTiles, maxTileZoom, minTileZoom, maxOffsetZoom } = this.opts
+    const {viewport} = props;
+
+    if (minTileZoom > viewport.zoom)
+        return [];
+
+    const options = Object.assign({}, props, this.opts);
+    console.log('options: ', options);
+    /** @type {[]} */
+    let indices = super.getTileIndices(options);
 
     if(indices.length === 0) return indices;
-    const {viewport} = props;
+
+    let newIndices = [];
+    if (maxTileZoom) {
+        console.log('max tile zoom setted');
+    }
+    if (maxTileZoom) {
+        indices.map((index) => {
+            let zoomDiff = maxTileZoom ? index.z - maxTileZoom : 0;
+            if (zoomDiff < 0)
+                zoomDiff = 0
+            index.z = index.z - zoomDiff;
+            if (zoomDiff > 0) {
+                index.x = Math.floor(index.x / (2 ** zoomDiff));
+                index.y = Math.floor(index.y / (2 ** zoomDiff));
+            } 
+            let founded = false;
+            for (let newIndex of newIndices) {
+                if (newIndex.x == index.x && newIndex.y == index.y && newIndex.z == index.z) {
+                    founded = true;
+                    break;
+                }
+            }
+            if (!founded)
+                newIndices.push(index)
+        });
+        indices = newIndices;
+    }
+
 	const height = viewport.height;
 	const width = viewport.width;
 	const lat_rif = viewport.unproject([width / 2, height / 2])[1];
 	const lng_rif = viewport.unproject([width / 2, height / 2])[0];
-    return _.sortBy(indices, ({ x, y, z }) => {
+    let orderedIndices = _.sortBy(indices, ({ x, y, z }) => {
 		const lat_a = tile2lat(y, z);
 		const lng_a = tile2lng(x, z);
 		return getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
     });
-
-    let minY = +Infinity,
-      maxY = -Infinity,
-      minX = +Infinity,
-      maxX = -Infinity;
-
-    for (const { x, y } of indices) {
-      if (x < minX) {
-        minX = x;
-      }
-      if (x > maxX) {
-        maxX = x;
-      }
-      if (y < minY) {
-        minY = y;
-      }
-      if (y > maxY) {
-        maxY = y;
-      }
+    if (maxOffsetZoom) {
+        orderedIndices = orderedIndices.filter(({z}) => viewport.zoom - z <= maxOffsetZoom);
     }
 
-    const midX = minX + ((maxX - minX) / 2);
-    const midY = minY + ((maxY - minY) / 2);
-    // const midX = (minX + maxX) * 0.5 + 1000.5;
-    // const midY = (minY + maxY) * 0.5 + 10;
-
-    return _.sortBy(indices, ({ x, y }) =>
-      Math.sqrt(Math.pow(x - midX, 2) + Math.pow(y - midY, 2)),
-    //   Math.sqrt(Math.pow(x - 0.5 - midX, 2) + Math.pow(y - 0.5 - midY, 2)),
-    );
+    if (maxTiles && maxTiles >= 0) 
+        return orderedIndices.slice(0, maxTiles);
+    return orderedIndices;
   }
 }
 
@@ -316,7 +329,7 @@ export class Tileset2D {
             return [];
         const indices = getTileIndices({
             viewport,
-            maxZoom,
+            maxZoom: 16,
             minZoom,
             zRange,
             tileSize,
@@ -325,7 +338,7 @@ export class Tileset2D {
             modelMatrixInverse,
             zoomOffset
         });
-        if (maxTiles) {
+        if (maxTiles && maxTiles >= 0) {
             return indices.slice(0, maxTiles);
         }
         return indices;
