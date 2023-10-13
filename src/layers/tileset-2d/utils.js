@@ -249,7 +249,10 @@ export function getTileIndices({
   tileSize = TILE_SIZE,
   modelMatrix,
   modelMatrixInverse,
-  zoomOffset = 0
+  zoomOffset = 0, 
+  minTileZoom, 
+  maxTileZoom, 
+  maxTiles
 }) {
   let z = viewport.isGeospatial
     ? Math.round(viewport.zoom + Math.log2(TILE_SIZE / tileSize)) + zoomOffset
@@ -268,7 +271,7 @@ export function getTileIndices({
     transformedExtent = transformBox(extent, modelMatrix)
   }
   return viewport.isGeospatial
-    ? getOSMTileIndices(viewport, z, zRange, extent)
+    ? getOSMTileIndices(viewport, z, zRange, extent, minTileZoom, maxTileZoom, maxTiles)
     : getIdentityTileIndices(
         viewport,
         z,

@@ -7,6 +7,7 @@ uniform bool picked;
 
 // Varying
 in vec4 vColor;
+in float vPicked;
 
 out vec4 fragmentColor;
 
@@ -31,16 +32,16 @@ void main(void) {
     #endif
   #endif
 
-  fragmentColor.r *= 1.3;
-  fragmentColor.g *= 1.3;
-  fragmentColor.b *= 1.3;
-  if (picked) {
+  DECKGL_FILTER_COLOR(fragmentColor, geometry);
+  fragmentColor.r *= 2.4;
+  fragmentColor.g *= 2.4;
+  fragmentColor.b *= 2.4;
+  if (vPicked > 0.) {
     fragmentColor.r *= 1.6;
     fragmentColor.g *= 1.6;
     fragmentColor.b *= 0.4;
   }
   fragmentColor.a *= opacity;
-  DECKGL_FILTER_COLOR(fragmentColor, geometry);
   fragmentColor = picking_filterPickingColor(fragmentColor);
 }
 `;

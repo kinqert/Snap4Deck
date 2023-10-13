@@ -18,6 +18,7 @@ import { shouldComposeModelMatrix } from '../utils/matrix';
 import { waitForGLTFAssets } from '../cached-glb-layer/cached-glb-layer';
 import vs from './building-layer-vs';
 import fs from './building-layer-fs';
+import { reject } from 'underscore';
 
 const defaultProps = {
     ...ScenegraphLayer.defaultProps,
@@ -44,7 +45,7 @@ export class BuildingLayer extends ScenegraphLayer {
         super.updateState(params);
         const { props, oldProps } = params;
 
-        this.setState({lastIndexBuilding: 0});
+        this.setState({ lastIndexBuilding: 0 });
         if (props.data !== oldProps.data) {
             let index = 0;
             for (let d of props.data) {
@@ -87,9 +88,6 @@ export class BuildingLayer extends ScenegraphLayer {
     }
 
     _updateScenegraph(scenegraph, index) {
-        // debug
-        const start = Date.now();
-        // fine debug
         const props = this.props;
         const { gl } = this.context;
         let scenegraphData = null;
@@ -105,11 +103,6 @@ export class BuildingLayer extends ScenegraphLayer {
                 mat.pbrMetallicRoughness.metallicFactor = 0.5;
                 mat.pbrMetallicRoughness.roughnessFactor = 1;
             }
-            // if (window.Worker) {
-            //     const worker = new Worker('../widgets/layers/workers/building-worker.js');
-            //     console.log(worker);
-            //     worker.postMessage('ciao');
-            // }
             const gltfObjects = createGLTFObjects(gl, gltf, this._getModelOptions());
             scenegraphData = { gltf, ...gltfObjects };
 
@@ -150,7 +143,7 @@ export class BuildingLayer extends ScenegraphLayer {
             j++;
         }
         var d = this.props.data[index];
-        
+
         let i = 0;
         for (let pos of this.props.getPosition(d)) {
             uPositions.push(pos - fp64LowPart(pos));
@@ -201,9 +194,13 @@ export class BuildingLayer extends ScenegraphLayer {
         for (let d of this.props.data) {
             let j = 0;
             if (d.scenegraph) {
+                if (!d.scenegraph.hasOwnProperty('children')) {
+                    console.error('tile not elab');
+                    continue;
+                }
                 const mainNode = d.scenegraph.children[0];
                 let buildingsNodes = mainNode.children;
-                
+
                 for (let node of buildingsNodes) {
                     let picked = false;
                     for (let building of d.buildings) {

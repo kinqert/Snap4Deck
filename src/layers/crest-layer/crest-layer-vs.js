@@ -61,7 +61,8 @@ export const vs = `#version 300 es
         vColor = vec4(0.);
         vColor.a = 1.;
 
-        float height = isAnimated ? max(maxHeight, arrowSize) : maxHeight;
+        // float height = isAnimated ? max(maxHeight, arrowSize) : maxHeight;
+        float height = maxHeight;
 
         if (positions.x == 0.0) {
             vColor.rgb = startColor.rgb;

@@ -76,7 +76,6 @@ export class Tileset2DCentered extends _Tileset2D {
         return [];
 
     const options = Object.assign({}, props, this.opts);
-    console.log('options: ', options);
     /** @type {[]} */
     let indices = super.getTileIndices(options);
 
@@ -118,9 +117,78 @@ export class Tileset2DCentered extends _Tileset2D {
 		const lng_a = tile2lng(x, z);
 		return getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
     });
-    if (maxOffsetZoom) {
-        orderedIndices = orderedIndices.filter(({z}) => viewport.zoom - z <= maxOffsetZoom);
+    // if (maxOffsetZoom) {
+    //     orderedIndices = orderedIndices.filter(({z}) => viewport.zoom - z <= maxOffsetZoom);
+    // }
+    orderedIndices = orderedIndices.filter(({z}) => viewport.zoom - z <= 2);
+
+    if (maxTiles && maxTiles >= 0) 
+        return orderedIndices.slice(0, maxTiles);
+    return orderedIndices;
+  }
+}
+// export class Tileset2DFixed extends _Tileset2D {
+//   getTileIndices(props) {
+//     const { maxTiles, maxTileZoom, minTileZoom, maxOffsetZoom } = this.opts
+//     const {viewport} = props;
+
+//     if (minTileZoom > viewport.zoom)
+//         return [];
+
+//     const options = Object.assign({}, props, this.opts, {zoomOffset: 16 - viewport.zoom});
+//     /** @type {[]} */
+//     return super.getTileIndices(options);
+
+//   }
+// }
+export class Tileset2DFixed extends _Tileset2D {
+  getTileIndices(props) {
+    const { maxTiles, maxTileZoom, minTileZoom, maxOffsetZoom } = this.opts
+    const {viewport} = props;
+
+    if (minTileZoom > viewport.zoom)
+        return [];
+
+    const options = Object.assign({}, props, this.opts, {zoomOffset: 16 - viewport.zoom});
+    /** @type {[]} */
+    let indices = super.getTileIndices(options);
+
+    if(indices.length === 0) return indices;
+
+    let newIndices = [];
+    if (maxTileZoom) {
+        indices.map((index) => {
+            let zoomDiff = maxTileZoom ? index.z - maxTileZoom : 0;
+            if (zoomDiff < 0)
+                zoomDiff = 0
+            index.z = index.z - zoomDiff;
+            if (zoomDiff > 0) {
+                index.x = Math.floor(index.x / (2 ** zoomDiff));
+                index.y = Math.floor(index.y / (2 ** zoomDiff));
+            } 
+            let founded = false;
+            for (let newIndex of newIndices) {
+                if (newIndex.x == index.x && newIndex.y == index.y && newIndex.z == index.z) {
+                    founded = true;
+                    break;
+                }
+            }
+            if (!founded)
+                newIndices.push(index)
+        });
+        indices = newIndices;
     }
+
+	const height = viewport.height;
+	const width = viewport.width;
+	const lat_rif = viewport.unproject([width / 2, height / 2])[1];
+	const lng_rif = viewport.unproject([width / 2, height / 2])[0];
+    let orderedIndices = _.sortBy(indices, ({ x, y, z }) => {
+		const lat_a = tile2lat(y, z);
+		const lng_a = tile2lng(x, z);
+		return getMeterDistance(lat_a, lng_a, lat_rif, lng_rif);
+    });
+    orderedIndices = orderedIndices.filter(({z}) => viewport.zoom - z <= 2);
 
     if (maxTiles && maxTiles >= 0) 
         return orderedIndices.slice(0, maxTiles);
@@ -324,13 +392,18 @@ export class Tileset2D {
         modelMatrix,
         modelMatrixInverse
     }) {
-        const { tileSize, extent, zoomOffset, maxTiles, minTileZoom } = this.opts
+        const { tileSize, extent, zoomOffset, maxTiles, minTileZoom, maxTileZoom } = this.opts
         if (minTileZoom > viewport.zoom)
             return [];
-        const indices = getTileIndices({
+        var indices = getTileIndices({
             viewport,
-            maxZoom: 16,
-            minZoom,
+            // maxZoom: 16,
+            // minZoom: 14,
+            // maxZoom: null,
+            // minZoom: null,
+            minTileZoom,
+            maxTileZoom,
+            maxTiles,
             zRange,
             tileSize,
             extent: extent,
@@ -338,6 +411,7 @@ export class Tileset2D {
             modelMatrixInverse,
             zoomOffset
         });
+
         if (maxTiles && maxTiles >= 0) {
             return indices.slice(0, maxTiles);
         }

@@ -18,6 +18,7 @@ const defaultProps = {
 
 export class BuildingTileLayer extends CompositeLayer {
     static defaultProps = defaultProps;
+    worker = new Worker('../widgets/layers/worker.js');
 
     getTiledBuildingData(tile) {
         const { data, fetch, includedTiles } = this.props;
@@ -87,10 +88,16 @@ export class BuildingTileLayer extends CompositeLayer {
                     }
                     return fetchFile(url, { signal })
                         .then(response => response.arrayBuffer())
-                        .then(arrayBuffer => {
-                            return load(arrayBuffer, GLTFLoader).then(scenegraph => {
-                                buildings[0].scenegraph = scenegraph;
-                                return buildings;
+                        .then(async (arrayBuffer) => {
+                            return new Promise((resolve, reject) => {
+                                if (window.Worker) {
+                                    const worker = new Worker('../widgets/layers/worker.js');
+                                    worker.postMessage(arrayBuffer);
+                                    worker.onmessage = (message) => {
+                                        buildings[0].scenegraph = message.data;
+                                        resolve(buildings);
+                                    };
+                                }
                             });
                         });
                 });

@@ -12,13 +12,14 @@ const defaultProps = {
     fusionTopDown: { type: 'function', value: geojsonFusionTopDown, compare: false },
     fusionPeer: { type: 'function', value: null, compare: false },
     deepLoad: { type: 'number', value: null, compare: false },
+    updateCommonState: { type: 'function', value: null, compare: false },
     offsetLoad: { type: 'number', value: null, compare: false },
     statePasstrough: { type: 'bool', value: false, compare: false },
     getFusionCoords: { type: 'function', value: null, compare: false },
-    maxTiles: {type: 'number', value: null, compare: false},
-    minTileZoom: {type: 'number', value: null, compare: false},
-    maxTileZoom: {type: 'number', value: null, compare: false},
-    maxOffsetZoom: {type: 'number', value: 0, compare: false},
+    maxTiles: { type: 'number', value: null, compare: false },
+    minTileZoom: { type: 'number', value: null, compare: false },
+    maxTileZoom: { type: 'number', value: null, compare: false },
+    maxOffsetZoom: { type: 'number', value: 0, compare: false },
 }
 
 export function geojsonFusionTopDown(parent, current, index) {
@@ -309,6 +310,14 @@ export class FusionTileLayer extends TileLayer {
                     // nothing to show
                 } else if (!tile.layers) {
                     const { commonState } = this.state;
+                    const defaultUpdateCommonState = (state) => {
+                        this.setState({
+                            commonState: {
+                                ...this.state.commonState,
+                                ...state
+                            }
+                        });
+                    }
                     const layers = this.renderSubLayers({
                         ...this.props,
                         id: `${this.id}-${tile.id}`,
@@ -316,14 +325,7 @@ export class FusionTileLayer extends TileLayer {
                         _offset: 0,
                         tile,
                         commonState,
-                        updateCommonState: (state) => {
-                            this.setState({
-                                commonState: {
-                                    ...this.state.commonState,
-                                    ...state
-                                }
-                            });
-                        }
+                        updateCommonState: this.props.updateCommonState || defaultUpdateCommonState,
                     });
 
                     tile.layers = flatten(layers, Boolean).map((layer) =>

@@ -167,7 +167,7 @@ export class MultiElevationTerrainLayer extends TerrainLayer {
                 propName: 'texture',
                 layer: this,
                 loaders: [],
-                signal
+                // signal
             }).catch(_ => null) :
             Promise.resolve(null);
 
@@ -329,7 +329,7 @@ export class MultiElevationTerrainLayer extends TerrainLayer {
                     onTileError,
                     maxCacheSize,
                     maxCacheByteSize,
-                    TilesetClass: Tileset2DCentered,
+                    // TilesetClass: Tileset2DCentered,
                     refinementStrategy
                 }
             );
