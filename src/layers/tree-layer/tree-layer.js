@@ -7,6 +7,7 @@ import { lon2tile, lat2tile } from '../../utils/tile-utils';
 import { CachedGLBLayer } from '../cached-glb-layer/cached-glb-layer';
 import { FusionTileLayer, geojsonFusionBottomUp, geojsonFusionTopDown } from '../fusion-tile-layer/fusion-tile-layer';
 import { Tileset2D } from '../bundle';
+import { LightScenegraphLayer } from '../light-scenegraph-layer/light-scenegraph-layer';
 
 const defaultProps = {
     ...FusionTileLayer.defaultProps,
@@ -76,7 +77,7 @@ export class TreeLayer extends CompositeLayer {
     }
 
     renderSubLayers(props) {
-        const SubLayerClass = this.getSubLayerClass('mesh', CachedGLBLayer);
+        const SubLayerClass = this.getSubLayerClass('mesh', LightScenegraphLayer);
         const { model } = this.props;
         const { data } = props;
         if (!data || !data[0] || !data[1])
@@ -98,6 +99,9 @@ export class TreeLayer extends CompositeLayer {
             getPosition: d => {
                 const elevation = d.properties && d.properties.elevation ? d.properties.elevation : 0;
                 return [...d.geometry.coordinates, this.props.getElevation(d) || 0];
+            },
+            updateTriggers: {
+                opacity: this.props.opacity,
             },
             _lighting: 'pbr'
         });

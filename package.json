@@ -8,15 +8,15 @@
 	"author": "Lorenzo Adreani",
 	"license": "GPL",
 	"devDependencies": {
-		"webpack": "^5.88.2",
+		"webpack": "^5.89.0",
 		"webpack-cli": "^4.10.0"
 	},
 	"dependencies": {
-		"@deck.gl/core": "^8.9.30",
-		"@deck.gl/extensions": "^8.9.30",
-		"@deck.gl/geo-layers": "^8.9.30",
-		"@deck.gl/layers": "^8.9.30",
-		"@deck.gl/mesh-layers": "^8.9.30",
+		"@deck.gl/core": "^8.9.31",
+		"@deck.gl/extensions": "^8.9.31",
+		"@deck.gl/geo-layers": "^8.9.31",
+		"@deck.gl/layers": "^8.9.31",
+		"@deck.gl/mesh-layers": "^8.9.31",
 		"@loaders.gl/gltf": "^3.3.1",
 		"@loaders.gl/obj": "^3.4.14",
 		"@loaders.gl/terrain": "^3.4.14",

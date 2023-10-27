@@ -11,3 +11,5 @@ export {MultiElevationTerrainLayer} from './multi-elevation-terrain-layer/multi-
 export * from './fusion-tile-layer/fusion-tile-layer';
 export * from './glb-tile-layer/glb-tileset';
 export {BuildingFusionTileLayer} from './building-fusion-tile-layer/building-fusion-tile-layer';
+export {Tile3DLoweredLayer} from './Tile3DLoweredLayer/Tile3DLoweredLayer'; 
+export {LightScenegraphLayer} from './light-scenegraph-layer/light-scenegraph-layer';

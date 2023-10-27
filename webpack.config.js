@@ -13,7 +13,7 @@ module.exports = {
   },
   mode: 'production',
   optimization: {
-    minimize: false,
+    minimize: true,
   },
   output: {
     filename: '[name].js',

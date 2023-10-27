@@ -168,7 +168,8 @@ export class BuildingFusionTileLayer extends CompositeLayer {
                 id: `building-layer-${z}-${x}-${y}`,
                 getPosition: d => {
                     if (Array.isArray(d.coord) && d.coord.length == 2)
-                        return [...d.coord, -47.79]
+                        return [...d.coord, 47.79]
+                        // return [...d.coord, -47.79]
                     return [0, 0, 0];
                 },
                 _lighting: 'pbr',
